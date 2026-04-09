@@ -1,0 +1,46 @@
+name: Release Please
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Checkout release PR branch
+        if: ${{ steps.release.outputs.pr }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ fromJson(steps.release.outputs.pr).headBranchName }}
+
+      - name: Regenerate integrity hashes
+        if: ${{ steps.release.outputs.pr }}
+        run: |
+          find . -name "SKILL.md" -not -path './.git/*' -exec sha256sum {} \; | sort > .skill-hashes.sha256
+          find . -path './plugins/*/skills/*/*.md' -not -path './.git/*' -exec sha256sum {} \; | sort >> .skill-hashes.sha256
+          find . -path './plugins/*/.claude-plugin/plugin.json' -exec sha256sum {} \; >> .skill-hashes.sha256
+
+      - name: Push hash update to release PR
+        if: ${{ steps.release.outputs.pr }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .skill-hashes.sha256
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: regenerate integrity hashes"
+            git push
+          fi

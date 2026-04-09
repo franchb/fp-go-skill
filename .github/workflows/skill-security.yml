@@ -78,8 +78,8 @@ jobs:
       - name: Verify integrity hashes
         run: |
           find . -name "SKILL.md" -not -path './.git/*' -exec sha256sum {} \; | sort > /tmp/skill-hashes-new.sha256
-          find . -path './skills/*/*.md' -not -path './.git/*' -exec sha256sum {} \; | sort >> /tmp/skill-hashes-new.sha256
-          sha256sum .claude-plugin/plugin.json >> /tmp/skill-hashes-new.sha256 2>/dev/null || true
+          find . -path './plugins/*/skills/*/*.md' -not -name "SKILL.md" -not -path './.git/*' -exec sha256sum {} \; | sort >> /tmp/skill-hashes-new.sha256
+          find . -path './plugins/*/.claude-plugin/plugin.json' -exec sha256sum {} \; | sort >> /tmp/skill-hashes-new.sha256
           if [ -f .skill-hashes.sha256 ]; then
             if ! diff -q .skill-hashes.sha256 /tmp/skill-hashes-new.sha256 > /dev/null 2>&1; then
               echo "::warning::Skill file hashes changed — verify changes are intentional:"
