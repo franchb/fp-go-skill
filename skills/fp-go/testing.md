@@ -44,6 +44,7 @@ func TestOptionFunctorLaws(t *testing.T) {
         },
     )
 }
+
 ```
 
 ---
@@ -54,6 +55,7 @@ func TestOptionFunctorLaws(t *testing.T) {
 
 ```go
 type Gen[A any] func(*rapid.T) A
+
 ```
 
 `Gen[A]` is a monadic generator — a function from rapid's test state to a value of type `A`. Unlike rapid's opaque `*Generator[A]`, `Gen` supports `Map`, `Chain`, and `Ap` for composable, dependent test data generation.
@@ -124,6 +126,7 @@ type Gen[A any] func(*rapid.T) A
 ### Generator Composition Patterns
 
 **Independent combination with Map3:**
+
 ```go
 type Person struct { Name string; Age int; Email string }
 
@@ -135,9 +138,11 @@ genPerson := gen.Map3(
         return Person{Name: name, Age: age, Email: email}
     },
 )
+
 ```
 
 **Dependent generation with Chain:**
+
 ```go
 type Order struct { Items []string; Total float64 }
 
@@ -150,16 +155,21 @@ genOrder := gen.Chain(
         )
     },
 )
+
 ```
 
 **Filtered generation:**
+
 ```go
 genAdult := gen.Filter(genPerson, func(p Person) bool { return p.Age >= 18 })
+
 ```
 
 **Converting to rapid for law tests:**
+
 ```go
 rapidGen := gen.ToRapid(genPerson) // *rapid.Generator[Person]
+
 ```
 
 ---
@@ -195,6 +205,7 @@ type Monad[A, B, FA, FB, FAB any] interface {
     Applicative[A, B, FA, FB, FAB]
     Chainable[A, B, FA, FB]
 }
+
 ```
 
 Constructors: `MakePointed`, `MakeFunctor`, `MakeApply`, `MakeApplicative`, `MakeChainable`, `MakeMonad`.
@@ -218,9 +229,11 @@ func FunctorLaws[FA, FB, FC, A, B, C any](
     identity func(A) A,
     compose func(func(A) B, func(B) C) func(A) C,
 )
+
 ```
 
 Verifies:
+
 - **Identity**: `Map(id)(fa) == fa`
 - **Composition**: `Map(g . f)(fa) == Map(g)(Map(f)(fa))`
 
@@ -241,6 +254,7 @@ func ApplicativeLaws[FA, FB, FAB, A, B any](
     apAB func(FA) func(FAB) FB,
     identity func(A) A,
 )
+
 ```
 
 Verifies: **Identity** (`Ap(Of(id))(fa) == fa`) and **Homomorphism** (`Ap(Of(f))(Of(a)) == Of(f(a))`).
@@ -258,6 +272,7 @@ func ApplicativeFullLaws[FA, FB, FC, FAB, FBC, FAC, FABAC, FABB, A, B, C any](
     genBC *rapid.Generator[func(B) C],
     inst *ApplicativeInstances[FA, FB, FC, FAB, FBC, FAC, FABAC, FABB, A, B, C],
 )
+
 ```
 
 Use with `OptionApplicativeInstances` or `EitherApplicativeInstances` for zero-boilerplate law verification.
@@ -279,9 +294,11 @@ func MonadLaws[FA, FB, FC, A, B, C any](
     chainBC func(func(B) FC) func(FB) FC,
     chainAC func(func(A) FC) func(FA) FC,
 )
+
 ```
 
 Verifies:
+
 - **Left identity**: `Chain(f)(Of(a)) == f(a)`
 - **Right identity**: `Chain(Of)(fa) == fa` (via `MonadLawsFull`)
 - **Associativity**: `Chain(g)(Chain(f)(fa)) == Chain(x => Chain(g)(f(x)))(fa)`
@@ -291,27 +308,35 @@ Additional: `ChainAssociativity` for just the associativity law.
 #### Algebraic Structure Laws
 
 **Semigroup** — verifies associativity:
+
 ```go
 func SemigroupLaws[A any](t *testing.T, genA *rapid.Generator[A], eqA func(A, A) bool, concat func(A, A) A)
 func SemigroupInterfaceLaws[A any](t *testing.T, genA *rapid.Generator[A], eqA func(A, A) bool, sg interface{ Concat(A, A) A })
+
 ```
 
 **Monoid** — verifies associativity + identity (calls `SemigroupLaws` internally):
+
 ```go
 func MonoidLaws[A any](t *testing.T, genA *rapid.Generator[A], eqA func(A, A) bool, concat func(A, A) A, empty A)
 func MonoidInterfaceLaws[A any](t *testing.T, genA *rapid.Generator[A], eqA func(A, A) bool, m interface{ Concat(A, A) A; Empty() A })
+
 ```
 
 **Eq** — verifies reflexivity, symmetry, transitivity:
+
 ```go
 func EqLaws[A any](t *testing.T, genA *rapid.Generator[A], equals func(A, A) bool)
 func EqInterfaceLaws[A any](t *testing.T, genA *rapid.Generator[A], eqA interface{ Equals(A, A) bool })
+
 ```
 
 **Ord** — verifies antisymmetry, transitivity, totality, consistency (calls `EqLaws` internally):
+
 ```go
 func OrdLaws[A any](t *testing.T, genA *rapid.Generator[A], equals func(A, A) bool, compare func(A, A) int)
 func OrdInterfaceLaws[A any](t *testing.T, genA *rapid.Generator[A], ordA interface{ Equals(A, A) bool; Compare(A, A) int })
+
 ```
 
 #### Lens Laws
@@ -326,9 +351,11 @@ func LensLaws[S, A any](
     get func(S) A,
     set func(A) func(S) S,
 )
+
 ```
 
 Verifies:
+
 - **Get-Set**: `Set(Get(s))(s) == s`
 - **Set-Get**: `Get(Set(a)(s)) == a`
 - **Set-Set**: `Set(b)(Set(a)(s)) == Set(b)(s)`
@@ -340,9 +367,11 @@ For Option and Either, all typeclass operations are pre-wired:
 ```go
 func OptionApplicativeInstances[A, B, C comparable]() *ApplicativeInstances[...]
 func EitherApplicativeInstances[E, A, B, C comparable]() *ApplicativeInstances[...]
+
 ```
 
 Usage:
+
 ```go
 func TestOptionApplicativeFullLaws(t *testing.T) {
     inst := laws.OptionApplicativeInstances[int, string, float64]()
@@ -354,6 +383,7 @@ func TestOptionApplicativeFullLaws(t *testing.T) {
         inst,
     )
 }
+
 ```
 
 ---
@@ -428,6 +458,7 @@ val := assert.AssertEffect(t, deps, ctx, myEffect)
 
 // Verify both success and value in one line
 assert.AssertOkEq(t, result, 42)
+
 ```
 
 ---
@@ -444,9 +475,11 @@ Verifies `decode(encode(a)) == a` for all generated `a`.
 func RoundTrip[A, B any](t *testing.T, name string, genA *rapid.Generator[A], eqA func(A, A) bool, encode func(A) B, decode func(B) A)
 func RoundTripPartial[A, B any](t *testing.T, name string, genA *rapid.Generator[A], eqA func(A, A) bool, encode func(A) B, decode func(B) (A, bool))
 func RoundTripError[A, B any](t *testing.T, name string, genA *rapid.Generator[A], eqA func(A, A) bool, encode func(A) B, decode func(B) (A, error))
+
 ```
 
 Three variants for different decode signatures:
+
 - `RoundTrip` — pure decode
 - `RoundTripPartial` — decode returns `(A, bool)`
 - `RoundTripError` — decode returns `(A, error)`
@@ -464,6 +497,7 @@ prop.RoundTripPartial(t, "int/string", rapid.Int(),
     strconv.Itoa,
     func(s string) (int, bool) { v, err := strconv.Atoi(s); return v, err == nil },
 )
+
 ```
 
 ### Oracle (Reference Implementation)
@@ -472,6 +506,7 @@ Verifies `impl(a) == reference(a)` for all generated `a`. Use when you have an o
 
 ```go
 func Oracle[A, B any](t *testing.T, name string, genA *rapid.Generator[A], eqB func(B, B) bool, impl func(A) B, reference func(A) B)
+
 ```
 
 ```go
@@ -480,6 +515,7 @@ prop.Oracle(t, "validateAge", rapid.IntRange(-1000, 1000),
     validateAgeOptimized,
     validateAgeReference,
 )
+
 ```
 
 ### Idempotent
@@ -488,6 +524,7 @@ Verifies `f(f(x)) == f(x)` — applying the function twice gives the same result
 
 ```go
 func Idempotent[A any](t *testing.T, name string, genA *rapid.Generator[A], eqA func(A, A) bool, f func(A) A)
+
 ```
 
 ```go
@@ -495,6 +532,7 @@ prop.Idempotent(t, "normalizeEmail", rapid.StringMatching(`[A-Za-z]+@[a-z]+\.[a-
     func(a, b string) bool { return a == b },
     strings.ToLower,
 )
+
 ```
 
 ### Commutative
@@ -503,6 +541,7 @@ Verifies `f(a, b) == f(b, a)` — order of arguments doesn't matter.
 
 ```go
 func Commutative[A, B any](t *testing.T, name string, genA *rapid.Generator[A], eqB func(B, B) bool, f func(A, A) B)
+
 ```
 
 ```go
@@ -510,6 +549,7 @@ prop.Commutative(t, "max", rapid.Int(),
     func(a, b int) bool { return a == b },
     max,
 )
+
 ```
 
 ### Invariant
@@ -518,12 +558,14 @@ Verifies that a predicate holds for all generated values.
 
 ```go
 func Invariant[A any](t *testing.T, name string, genA *rapid.Generator[A], predicate func(A) bool)
+
 ```
 
 ```go
 prop.Invariant(t, "validUsername", genValidUsername,
     func(u string) bool { return len(u) >= 3 && len(u) <= 20 },
 )
+
 ```
 
 ---
@@ -544,6 +586,7 @@ func (r *IORef[A]) Read() io.IO[A]
 func (r *IORef[A]) Write(a A) io.IO[struct{}]
 func (r *IORef[A]) Modify(f func(A) A) io.IO[struct{}]
 func (r *IORef[A]) ReadUnsafe() A  // Escape hatch for assertions
+
 ```
 
 ```go
@@ -552,6 +595,7 @@ ref.Write(42)()
 val := ref.Read()() // 42
 ref.Modify(func(n int) int { return n + 1 })()
 val = ref.Read()() // 43
+
 ```
 
 ### CallTracker
@@ -573,6 +617,7 @@ func (ct *CallTracker) Calls() io.IO[[]Call]
 func (ct *CallTracker) CallsUnsafe() []Call  // Escape hatch
 func (ct *CallTracker) CallCount(method string) int
 func (ct *CallTracker) CallsFor(method string) []Call
+
 ```
 
 ### Stub Builders
@@ -602,6 +647,7 @@ user := assert.AssertIORight[error](t, result)
 assert.AssertEqFunc(t, func(a, b int) bool { return a == b }, ct.CallCount("FindUser"), 1)
 calls := ct.CallsFor("FindUser")
 assert.AssertEqFunc(t, func(a, b string) bool { return a == b }, calls[0].Args[0].(string), "alice-id")
+
 ```
 
 ---
@@ -639,6 +685,7 @@ func TestMoneyMonoid(t *testing.T) {
     eqMoney := func(a, b Money) bool { return a == b }
     laws.MonoidLaws(t, genMoney(), eqMoney, moneyConcat, moneyEmpty)
 }
+
 ```
 
 ### Recipe 2: Testing a ReaderIOResult Pipeline
@@ -671,6 +718,7 @@ func TestGetUserPipeline(t *testing.T) {
     assert.AssertEqFunc(t, func(a, b string) bool { return a == b }, user.Name, "Alice")
     assert.AssertEqFunc(t, func(a, b int) bool { return a == b }, ct.CallCount("FindByID"), 1)
 }
+
 ```
 
 ### Recipe 3: Testing an Effect Service
@@ -692,6 +740,7 @@ func TestFetchUser(t *testing.T) {
     assert.AssertEqFunc(t, func(a, b string) bool { return a == b }, user.Name, "Bob")
     assert.AssertEqFunc(t, func(a, b int) bool { return a == b }, ct.CallCount("Find"), 1)
 }
+
 ```
 
 ### Recipe 4: Verifying Lens Laws for Nested Config
@@ -728,6 +777,7 @@ func TestServerPortLens(t *testing.T) {
         },
     )
 }
+
 ```
 
 ### Recipe 5: Round-Trip Testing a JSON Codec
@@ -758,6 +808,7 @@ func TestUserJSONRoundTrip(t *testing.T) {
         },
     )
 }
+
 ```
 
 ---

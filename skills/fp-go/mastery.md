@@ -45,6 +45,7 @@ func ApS[S1, S2, T any](
     setter func(T) func(S1) S2,
     fa Result[T],
 ) Operator[S1, S2]
+
 ```
 
 ### Lens-Based Variants
@@ -75,6 +76,7 @@ func ApSL[S, T any](
     lens Lens[S, T],
     fa Result[T],
 ) Operator[S, S]
+
 ```
 
 ### Building a Complex Struct Step-by-Step
@@ -139,6 +141,7 @@ config := F.Pipe4(
     }),
 )
 // config: Result[WithDB] with all fields populated
+
 ```
 
 ### StateIO Do Notation
@@ -148,6 +151,7 @@ config := F.Pipe4(
 ```go
 func Do[ST, A any](s ST, a A) StateIO[ST, A]
 func Bind[ST, S1, S2, T any](setter, effect) Operator[ST, S1, S2]
+
 ```
 
 The `ST` type parameter is the mutable state threaded through the IO computation, while `S1`/`S2` are the do-notation accumulator types.
@@ -162,6 +166,7 @@ A Kleisli arrow is a function `func(A) M[B]` where `M` is a monad. In fp-go, eve
 
 ```go
 type Kleisli[A, B any] = func(A) M[B]
+
 ```
 
 For `result`: `type Kleisli[A, B any] = func(A) Result[B]`
@@ -186,6 +191,7 @@ result := F.Pipe2(
         return formatOrder(o)
     }),
 )
+
 ```
 
 ### ChainK Variants: Lifting Between Layers
@@ -210,6 +216,7 @@ func ChainResultK[A, B any](f either.Kleisli[error, A, B]) Operator[A, B]
 func ChainIOK[A, B any](f io.Kleisli[A, B]) Operator[A, B]
 func ChainIOResultK[A, B any](f ioresult.Kleisli[A, B]) Operator[A, B]
 func ChainReaderK[A, B any](f reader.Kleisli[context.Context, A, B]) Operator[A, B]
+
 ```
 
 ### Composing Kleisli Arrows with Flow
@@ -223,6 +230,7 @@ getUserOrders := F.Flow2(
     result.Chain(getOrders),  // func(User) Result[[]Order]
 )
 // getUserOrders: func(ID) Result[[]Order]
+
 ```
 
 ### When to Use Chain vs ChainK
@@ -237,7 +245,7 @@ getUserOrders := F.Flow2(
 
 ### Layer Diagram
 
-```
+```text
 Effect[C, A]
   = ReaderReaderIOResult[C, A]     -- adds an extra reader layer (C)
   = func(C) ReaderIOResult[A]      -- strips outer reader
@@ -251,11 +259,12 @@ Effect[C, A]
     |  IO[_]               -- side effects     |
     |  Either[error, _]    -- error handling   |
     +-----------------------------------------+
+
 ```
 
 ### Key Type Aliases
 
-```
+```text
 Reader[R, A]          = func(R) A
 IO[A]                 = func() A
 Either[E, A]          = tagged union (Left E | Right A)
@@ -264,6 +273,7 @@ IOResult[A]           = func() Either[error, A]
 ReaderIOResult[A]     = func(context.Context) func() Either[error, A]
 Effect[C, A]          = func(C) func(context.Context) func() Either[error, A]
 Thunk[A]              = ReaderIOResult[A]   -- an Effect with context already provided
+
 ```
 
 ### Choosing the Right Stack
@@ -289,6 +299,7 @@ func FromResult[C, A any](r Result[A]) Effect[C, A]
 
 // Lift a side-effectful thunk into an Effect
 func FromThunk[C, A any](f Thunk[A]) Effect[C, A]
+
 ```
 
 Each monad package provides `FromIO`, `FromEither`, `FromResult`, etc. to lift lower layers up. The pattern is consistent:
@@ -302,6 +313,7 @@ ioresult.FromEither[A](either)      // Either[error, A] -> IOResult[A]
 readerioresult.FromIOResult(ior)     // IOResult[A] -> ReaderIOResult[A]
 readerioresult.FromIO(io)            // IO[A] -> ReaderIOResult[A]
 readerioresult.FromEither(e)         // Either[error, A] -> ReaderIOResult[A]
+
 ```
 
 ### Context Specializations
@@ -314,6 +326,7 @@ type ReaderIOResult[A any] = func(context.Context) func() Either[error, A]
 
 // readerioresult -- R is generic
 type ReaderIOResult[R, A any] = func(R) func() Either[error, A]
+
 ```
 
 Use `context/` variants when you need Go's `context.Context` for cancellation/deadlines. Use generic variants when the reader environment is application-specific configuration.
@@ -321,6 +334,7 @@ Use `context/` variants when you need Go's `context.Context` for cancellation/de
 ### Performance Implications
 
 Deeper stacks add function call overhead. Each layer is a closure allocation. For hot paths:
+
 - Prefer `IOResult` over `Effect` if you don't need the reader layers
 - Pre-bind context outside tight loops
 - Consider `idiomatic/` variants for performance-critical code (see section 10)
@@ -339,6 +353,7 @@ func Promap[E, A, D, B any](
     f Reader[D, E],    // contravariant: transform input D -> E
     g Reader[A, B],    // covariant: transform output A -> B
 ) Kleisli[D, Effect[E, A], B]
+
 ```
 
 Implementation: `F.Flow2(Local[A](f), Map[D](g))`
@@ -355,6 +370,7 @@ func LocalIOK[A, C1, C2 any](f io.Kleisli[C2, C1]) func(Effect[C1, A]) Effect[C2
 func LocalResultK[A, C1, C2 any](f result.Kleisli[C2, C1]) func(Effect[C1, A]) Effect[C2, A]
 func LocalThunkK[A, C1, C2 any](f thunk.Kleisli[C2, C1]) func(Effect[C1, A]) Effect[C2, A]
 func LocalEffectK[A, C1, C2 any](f Kleisli[C2, C2, C1]) func(Effect[C1, A]) Effect[C2, A]
+
 ```
 
 ### Use Cases
@@ -369,6 +385,7 @@ extractDB := func(app AppConfig) DBConfig { return app.DB }
 // Adapt Effect[DBConfig, User] to work with AppConfig
 adapted := effect.Local[User](extractDB)(getUserEffect)
 // adapted: Effect[AppConfig, User]
+
 ```
 
 **Context transformation**: `LocalReaderK` is pure-function based. `LocalIOK`, `LocalResultK`, `LocalThunkK`, `LocalEffectK` allow the transformation itself to perform IO, fail, etc.
@@ -396,6 +413,7 @@ type MultiInjectionToken[T any] interface {
 // Create tokens
 func MakeToken[T any](name string) InjectionToken[T]
 func MakeMultiToken[T any](name string) MultiInjectionToken[T]
+
 ```
 
 ### Providers
@@ -420,6 +438,7 @@ func MakeProvider2[T1, T2, R any](
 ) DIE.Provider
 
 // ... up to MakeProvider15
+
 ```
 
 **Note**: Factory functions for MakeProvider2+ are curried: `func(T1) func(T2) IOResult[R]`.
@@ -436,6 +455,7 @@ func MakeTokenWithDefault1[T1, R any](
 ) InjectionToken[R]
 
 // ... up to MakeTokenWithDefault15
+
 ```
 
 These create tokens that have a built-in provider factory, so they resolve even without explicit provider registration.
@@ -448,6 +468,7 @@ func MakeInjector(providers []Provider) InjectableFactory
 
 // di/injector.go - type-safe resolution
 func Resolve[T any](token InjectionToken[T]) RIOR.ReaderIOResult[DIE.InjectableFactory, T]
+
 ```
 
 ### Application Entry Point
@@ -463,6 +484,7 @@ var RunMain = F.Flow3(
     Main,
     IOR.Fold(IO.Of[error], F.Constant1[any](IO.Of[error](nil))),
 )
+
 ```
 
 ### Dependency Resolution Modes
@@ -536,6 +558,7 @@ func testProviders() []DIE.Provider {
         appProvider(),
     }
 }
+
 ```
 
 ---
@@ -568,6 +591,7 @@ var Monoid = M.FunctionMonoid[RetryStatus](...)
 
 func ApplyPolicy(policy RetryPolicy, status RetryStatus) RetryStatus
 func Always[A any](a A) func(RetryStatus) A
+
 ```
 
 **Composing policies**:
@@ -580,6 +604,7 @@ policy := M.ConcatAll(retry.Monoid)([]retry.RetryPolicy{
     retry.LimitRetries(5),
     retry.CapDelay(10*time.Second, retry.ExponentialBackoff(100*time.Millisecond)),
 })
+
 ```
 
 ### Retrying
@@ -600,6 +625,7 @@ func Retrying[A any](
     action func(retry.RetryStatus) IO[A],
     check  func(A) bool,
 ) IO[A]
+
 ```
 
 ### Circuit Breaker States
@@ -621,9 +647,11 @@ func MakeClosedStateCounter(maxFailures uint) ClosedState
 
 // History-based: opens after N failures within a time window
 func MakeClosedStateHistory(timeWindow time.Duration, maxFailures uint) ClosedState
+
 ```
 
 State transitions:
+
 - **Closed -> Open**: failure threshold exceeded (`Check` returns `None`)
 - **Open -> Half-Open**: reset time exceeded (canary allowed)
 - **Half-Open -> Closed**: canary succeeds
@@ -642,6 +670,7 @@ type Metrics interface {
 
 func MakeMetricsFromLogger(name string, logger *log.Logger) Metrics
 func MakeVoidMetrics() Metrics  // no-op, for testing/benchmarks
+
 ```
 
 ### Creating a Circuit Breaker
@@ -669,6 +698,7 @@ func MakeSingletonBreaker[HKTT any](
 ) func(HKTT) HKTT
 
 var MakeClosedIORef = F.Flow2(createClosedCircuit, ioref.MakeIORef)
+
 ```
 
 `MakeCircuitBreaker` is highly generic (works with any HKT). The typical usage is via a pre-built wrapper for your specific monad. `MakeSingletonBreaker` wraps it into a simple `func(HKTT) HKTT` operator.
@@ -692,6 +722,7 @@ breaker := MakeSingletonBreaker(
 protectedCall := breaker(
     effect.Retrying(policy, action, check),
 )
+
 ```
 
 ---
@@ -711,6 +742,7 @@ type Trampoline[B, L any] struct {
 // tailrec/trampoline.go
 func Bounce[L, B any](b B) Trampoline[B, L]   // continue with new state
 func Land[B, L any](l L) Trampoline[B, L]     // terminate with result
+
 ```
 
 Note the type parameter order: `Bounce[L, B]` takes `L` first (the unused type), `B` second (the value being set). Similarly `Land[B, L]` takes `B` first (unused), `L` second (result).
@@ -731,6 +763,7 @@ func TailRec[R, A, B any](f Kleisli[R, A, Trampoline[A, B]]) Kleisli[R, A, B]
 
 // context/readerioresult/rec.go
 func TailRec[A, B any](f Kleisli[A, Trampoline[A, B]]) Kleisli[A, B]
+
 ```
 
 ### Example: Stack-Safe Factorial
@@ -755,6 +788,7 @@ factStep := func(s FactState) result.Result[tailrec.Trampoline[FactState, int]] 
 
 factorial := result.TailRec(factStep)
 // factorial(FactState{N: 10000, Acc: 1}) -- won't overflow the stack
+
 ```
 
 ### When to Use
@@ -793,6 +827,7 @@ func Evaluate[A, S any](s S) func(State[S, A]) A  // run, return value
 func MonadChainFirst[S any, FCT ~func(A) State[S, B], A, B any](ma State[S, A], f FCT) State[S, A]
 func ChainFirst[S any, FCT ~func(A) State[S, B], A, B any](f FCT) Operator[S, A, A]
 func Flap[S, A, B any](a A) Operator[S, func(A) B, B]
+
 ```
 
 ### StateIO (State + IO)
@@ -810,6 +845,7 @@ func Chain[S, A, B any](f Kleisli[S, A, B]) Operator[S, A, B]
 func Ap[B, S, A any](fa StateIO[S, A]) Operator[S, func(A) B, B]
 func FromIO[S, A any](fa IO[A]) StateIO[S, A]
 func FromIOK[S, A, B any](f func(A) IO[B]) Kleisli[S, A, B]
+
 ```
 
 ### Use Cases
@@ -836,6 +872,7 @@ program := F.Pipe3(
 )
 
 result := state.Evaluate[int](Counter{Value: 0})(program) // 2
+
 ```
 
 **StateIO for stateful IO**: threading mutable state through IO operations (file handles, connection pools, accumulators that also write logs).
@@ -853,6 +890,7 @@ result := state.Evaluate[int](Counter{Value: 0})(program) // 2
 type Iterator[U any] Lazy[Option[Pair[Iterator[U], U]]]
 type Kleisli[A, B any] = Reader[A, Iterator[B]]
 type Operator[A, B any] = Kleisli[Iterator[A], B]
+
 ```
 
 **`iter.Seq` iterators** (`iterator/iter`): Wraps Go 1.23+ `iter.Seq[T]` and `iter.Seq2[K, V]` with functional operations. Lazy, native Go range-over-func compatible.
@@ -863,6 +901,7 @@ type Seq[T any] = iter.Seq[T]
 type Seq2[K, V any] = iter.Seq2[K, V]
 type Kleisli[A, B any] = func(A) Seq[B]
 type Operator[A, B any] = Kleisli[Seq[A], B]
+
 ```
 
 ### Stateless Iterator Operations
@@ -892,6 +931,7 @@ func Fold[U any](m M.Monoid[U]) func(Iterator[U]) U
 func FoldMap[U, V any](m M.Monoid[V]) func(func(U) V) func(Iterator[U]) V
 func ChainFirst[U, V any](f Kleisli[U, V]) Operator[U, U]
 func FilterChain[U, V any](f func(U) Option[Iterator[V]]) Operator[U, V]
+
 ```
 
 ### iter.Seq Operations
@@ -935,6 +975,7 @@ func Scan[FCT ~func(V, U) V, U, V any](f FCT, initial V) Operator[U, V]
 
 // iterator/iter/uniq.go
 func Uniq[A any, K comparable](f func(A) K) Operator[A, A]
+
 ```
 
 ### Interop: iter.Seq <-> Stateless Iterator
@@ -956,6 +997,7 @@ func BindL[S, T any](
     l Lens[S, T],
     f func(S) Seq[T],
 ) func(Seq[S]) Seq[S]
+
 ```
 
 ---
@@ -979,12 +1021,14 @@ fp-go provides `idiomatic/` variants for performance-critical code. The key diff
 ### When to Use Each
 
 **Use standard** (default choice):
+
 - When you need `Either[E, A]` with custom error types (not just `error`)
 - When you need Do-notation (`Bind`, `Let`, `ApS`)
 - When you need `Flatten`, `Swap`, or other structural operations
 - For business logic where clarity matters more than nanoseconds
 
 **Use idiomatic**:
+
 - Hot paths with millions of operations per second
 - Simple pipelines: `Map`, `Chain`, `ChainFirst`
 - When error type is always `error`
@@ -1000,18 +1044,23 @@ import "github.com/IBM/fp-go/v2/context/readerioresult"
 // Idiomatic equivalents
 import "github.com/IBM/fp-go/v2/idiomatic/ioresult"
 import "github.com/IBM/fp-go/v2/idiomatic/context/readerresult"
+
 ```
 
 ### Allocation Analysis
 
 Standard `Either[error, A]`:
-```
+
+```text
 Either struct { value any; isRight bool }  // 8 + 8 + 8 = 24 bytes
+
 ```
 
 Idiomatic result:
-```
+
+```text
 (A, error)  // Go multi-return: 8 + 8 = 16 bytes, stack-allocated
+
 ```
 
 For pipelines with many intermediate Either values, idiomatic saves 33% memory per step and avoids interface boxing.
@@ -1027,6 +1076,7 @@ For pipelines with many intermediate Either values, idiomatic saves 33% memory p
 type Builder[T any] interface {
     Build() Result[T]
 }
+
 ```
 
 Any struct implementing `Build() Result[T]` can participate in the builder pattern with optics integration.
@@ -1036,9 +1086,11 @@ Any struct implementing `Build() Result[T]` can participate in the builder patte
 ```go
 // builder/prism.go
 func BuilderPrism[T any, B Builder[T]](creator func(T) B) Prism[B, T]
+
 ```
 
 Creates a `Prism` bidirectional conversion between a builder and its product:
+
 - **Extract** (builder -> product): calls `Build()`, converts `Result` to `Option`
 - **Construct** (product -> builder): uses the provided `creator` function
 
@@ -1064,6 +1116,7 @@ prism := builder.BuilderPrism(func(p Person) PersonBuilder {
 
 // prism.ReverseGet(Person{Name: "Bob", Age: 25})
 // => PersonBuilder{name: "Bob", age: 25}
+
 ```
 
 ### Endomorphism as Builder
@@ -1075,6 +1128,7 @@ The `endomorphism` package provides an alternative builder pattern using functio
 func Build[A any](e Endomorphism[A]) A     // apply to zero value
 func ConcatAll[T any](es []Endomorphism[T]) Endomorphism[T]  // compose (right-to-left)
 func Reduce[T any](es []Endomorphism[T]) T  // apply left-to-right from zero value
+
 ```
 
 Example:
@@ -1102,6 +1156,7 @@ config := endomorphism.Reduce([]endomorphism.Endomorphism[Config]{
     withDebug(true),
 })
 // Config{Host: "localhost", Port: 8080, Debug: true}
+
 ```
 
 ---
@@ -1115,6 +1170,7 @@ config := endomorphism.Reduce([]endomorphism.Endomorphism[Config]{
 type Endomorphism[A any] = func(A) A
 type Kleisli[A any] = func(A) Endomorphism[A]
 type Operator[A any] = Endomorphism[Endomorphism[A]]
+
 ```
 
 ### Composition: Right-to-Left vs Left-to-Right
@@ -1150,12 +1206,14 @@ func Ap[A any](fa Endomorphism[A]) Operator[A]
 
 func Flatten[A any](mma Endomorphism[Endomorphism[A]]) Endomorphism[A]
 func Join[A any](f Kleisli[A]) Endomorphism[A]  // W combinator: f(a)(a)
+
 ```
 
 ### Read
 
 ```go
 func Read[A any](a A) func(Endomorphism[A]) A
+
 ```
 
 Captures a value and returns a function that applies endomorphisms to it. Useful for evaluating multiple transformations on the same input:
@@ -1164,6 +1222,7 @@ Captures a value and returns a function that applies endomorphisms to it. Useful
 applyTo5 := endomorphism.Read(5)
 applyTo5(N.Mul(2))   // 10
 applyTo5(N.Add(1))   // 6
+
 ```
 
 ### Monoid/Semigroup
@@ -1173,6 +1232,7 @@ func Semigroup[A any]() S.Semigroup[Endomorphism[A]]
 func Monoid[A any]() M.Monoid[Endomorphism[A]]
 func Identity[A any]() Endomorphism[A]
 func Of[F ~func(A) A, A any](f F) Endomorphism[A]
+
 ```
 
 The monoid uses **right-to-left** composition for `Concat` and `Identity` as the empty element:
@@ -1185,12 +1245,14 @@ combined := M.ConcatAll(m)([]endomorphism.Endomorphism[int]{
     func(x int) int { return x * x },
 })
 // combined(5) = Mul2(Add1(Square(5))) = Mul2(Add1(25)) = Mul2(26) = 52
+
 ```
 
 ### FromSemigroup
 
 ```go
 func FromSemigroup[A any](s S.Semigroup[A]) Kleisli[A]
+
 ```
 
 Converts a semigroup into a Kleisli arrow. Follows "data last": `FromSemigroup(addSg)(5)` creates `func(x) { return x + 5 }`.
@@ -1201,11 +1263,13 @@ Converts a semigroup into a Kleisli arrow. Follows "data last": `FromSemigroup(a
 func Build[A any](e Endomorphism[A]) A
 func ConcatAll[T any](es []Endomorphism[T]) Endomorphism[T]  // right-to-left
 func Reduce[T any](es []Endomorphism[T]) T                    // left-to-right from zero
+
 ```
 
 ### Use Cases
 
 **Middleware chains**:
+
 ```go
 type Handler = func(http.Request) http.Response
 type Middleware = endomorphism.Endomorphism[Handler]
@@ -1217,9 +1281,11 @@ cors := func(h Handler) Handler { /* wrap with CORS */ }
 // Compose middlewares (right-to-left: cors wraps auth wraps logging)
 stack := endomorphism.ConcatAll([]Middleware{cors, auth, logging})
 finalHandler := stack(baseHandler)
+
 ```
 
 **Transformation pipelines**:
+
 ```go
 // Left-to-right pipeline execution
 result := endomorphism.Reduce([]endomorphism.Endomorphism[string]{
@@ -1229,6 +1295,7 @@ result := endomorphism.Reduce([]endomorphism.Endomorphism[string]{
 })
 // "" -> "" -> "" -> "" (from zero value)
 // Use Read or Build for specific starting values
+
 ```
 
 ---
@@ -1241,6 +1308,7 @@ result := endomorphism.Reduce([]endomorphism.Endomorphism[string]{
 // array/array.go
 func FilterMapWithIndex[A, B any](f func(int, A) Option[B]) Operator[A, B]
 func ReduceWithIndex[A, B any](f func(int, B, A) B, initial B) func([]A) B
+
 ```
 
 `FilterMapWithIndex` combines filtering and mapping with access to the element index. `ReduceWithIndex` is a fold that also passes the index.
@@ -1251,6 +1319,7 @@ func ReduceWithIndex[A, B any](f func(int, B, A) B, initial B) func([]A) B
 // array/sort.go
 func SortBy[T any](ord []O.Ord[T]) Operator[T, T]
 func SortByKey[K, T any](ord O.Ord[K], f func(T) K) Operator[T, T]
+
 ```
 
 `SortBy` accepts multiple `Ord` instances for multi-criteria stable sorting. `SortByKey` sorts by extracting a comparable key.
@@ -1267,12 +1336,14 @@ byAge := ord.Contramap(func(p Person) int { return p.Age })(ord.FromStrictCompar
 byName := ord.Contramap(func(p Person) string { return p.Name })(ord.FromStrictCompare[string]())
 
 sorted := A.SortBy([]ord.Ord[Person]{byAge, byName})(people)
+
 ```
 
 ### Intercalate
 
 ```go
 func Intercalate[A any](m M.Monoid[A]) func(A) func([]A) A
+
 ```
 
 Inserts a separator between elements and concatenates using the monoid:
@@ -1285,6 +1356,7 @@ import (
 
 joined := A.Intercalate(S.Monoid)(", ")([]string{"a", "b", "c"})
 // "a, b, c"
+
 ```
 
 ### Traverse and Sequence
@@ -1304,11 +1376,13 @@ func TraverseWithIndex[A, B, HKTB, HKTAB, HKTRB any](
     fap func(HKTB) func(HKTAB) HKTRB,
     f func(int, A) HKTB,
 ) func([]A) HKTRB
+
 ```
 
 Traverse maps each array element to an effect, then sequences the effects into one effect containing an array. The HKT type parameters are necessary because Go lacks higher-kinded types.
 
 For `Option`:
+
 ```go
 parseAll := array.Traverse(
     option.Of[[]int],
@@ -1323,6 +1397,7 @@ parseAll := array.Traverse(
 
 parseAll([]string{"1", "2", "3"}) // Some([1, 2, 3])
 parseAll([]string{"1", "x", "3"}) // None
+
 ```
 
 ### Other Array Operations
@@ -1363,6 +1438,7 @@ func Uniq[A any](eq Eq[A]) Operator[A, A]
 func Difference[A any](eq Eq[A]) func([]A) Operator[A, A]
 func Intersection[A any](eq Eq[A]) func([]A) Operator[A, A]
 func Union[A any](eq Eq[A]) func([]A) Operator[A, A]
+
 ```
 
 ---
@@ -1388,6 +1464,7 @@ import (
     RIOR "github.com/IBM/fp-go/v2/readerioresult"
     DIE "github.com/IBM/fp-go/v2/di/erasure"
 )
+
 ```
 
 ---
@@ -1428,9 +1505,11 @@ func fetchUserProfile[C any](userID string) effect.Effect[C, UserProfile] {
         },
     )
 }
+
 ```
 
 This combines:
+
 1. **Retry** with exponential backoff
 2. **Do-notation** for sequential, dependent computations
 3. **Effect** for the full reader+IO+error stack

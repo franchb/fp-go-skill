@@ -13,6 +13,7 @@ import (
     E "github.com/IBM/fp-go/v2/either"
     A "github.com/IBM/fp-go/v2/array"
 )
+
 ```
 
 ---
@@ -42,6 +43,7 @@ var parseInt = R.Eitherize1(strconv.Atoi)
 // Usage:
 //   parseInt("42")    => Right(42)
 //   parseInt("oops")  => Left(error)
+
 ```
 
 ### Recipe: Convert inline `(value, error)` with TryCatchError
@@ -63,6 +65,7 @@ func readConfig() R.Result[[]byte] {
 }
 
 // Right(data) if err == nil, Left(err) otherwise
+
 ```
 
 ### Recipe: Eitherize for zero-arg and multi-arg functions
@@ -106,6 +109,7 @@ func parseAndDouble(input string) R.Result[string] {
 // parseAndDouble("21") => Right("42")
 // parseAndDouble("-1") => Left(error: "negative: -1")
 // parseAndDouble("xx") => Left(error: strconv parse error)
+
 ```
 
 ### Recipe: Map vs Chain rule of thumb
@@ -144,6 +148,7 @@ var cleanParseDouble = F.Flow3(
 
 // cleanParseDouble(" 21 ") => Right(42)
 // cleanParseDouble("abc")  => Left(error)
+
 ```
 
 ### Recipe: Pipe vs Flow decision
@@ -189,6 +194,7 @@ func example() {
     _ = val2
     _ = msg
 }
+
 ```
 
 ### Recipe: FromPredicate to create Options conditionally
@@ -226,6 +232,7 @@ func example() {
     // result == Some(5)
     _ = result
 }
+
 ```
 
 ### Recipe: FromNillable and Chain for pointer/optional flows
@@ -251,6 +258,7 @@ func findDomain(email string) O.Option[string] {
 }
 // findDomain("a@b.com") => Some("b.com")
 // findDomain("invalid") => None
+
 ```
 
 ---
@@ -281,6 +289,7 @@ func readConfigWithFallback() R.Result[[]byte] {
         }),
     )
 }
+
 ```
 
 ### Recipe: GetOrElse for extracting with a default
@@ -316,6 +325,7 @@ func recoverNotFound(res R.Result[string]) R.Result[string] {
         }),
     )
 }
+
 ```
 
 ---
@@ -360,6 +370,7 @@ func example() {
     result := pipeline(context.Background())()
     _ = result
 }
+
 ```
 
 ---
@@ -411,6 +422,7 @@ func main() {
     val, err := result(context.Background())
     fmt.Println(val, err) // "Alice" <nil>
 }
+
 ```
 
 ### Recipe: Eitherize1 for parameterized Effect Kleisli arrows
@@ -449,6 +461,7 @@ func main() {
     val, err := effect.RunSync(thunk)(context.Background())
     fmt.Println(val, err)
 }
+
 ```
 
 ### Recipe: Provide + RunSync to execute Effects
@@ -491,6 +504,7 @@ func example() {
 
     fmt.Println(doubled, evens, sum)
 }
+
 ```
 
 ### Recipe: TraverseArray for fallible array operations
@@ -520,6 +534,7 @@ func main() {
     r2 := parseAll([]string{"1", "bad", "3"})
     fmt.Println(r2) // Left(error)
 }
+
 ```
 
 ### Recipe: SequenceArray to collect Results
@@ -548,9 +563,11 @@ type Person struct {
     Age   int
     Email string
 }
+
 ```
 
 Run `go generate ./...` to produce `gen_lens.go` containing:
+
 - `PersonLenses` struct with a `Lens[Person, T]` for each field
 - `MakePersonLenses()` constructor
 - `PersonRefLenses` for pointer-based access
@@ -586,6 +603,7 @@ func example() {
     older := L.Modify(ageLens, func(a int) int { return a+1 })(alice) // Age: 31
     _ = name; _ = bob; _ = older
 }
+
 ```
 
 ---
@@ -623,6 +641,7 @@ func fetchStatus(url string) RIOE.ReaderIOResult[int] {
 // Parallel execution: all URLs fetched concurrently
 var fetchAllStatuses = RIOE.TraverseArrayPar(fetchStatus)
 // fetchAllStatuses(urls)(ctx)() => Result[[]int]
+
 ```
 
 ---
@@ -677,6 +696,7 @@ func main() {
     val, err := effect.RunSync(thunk)(context.Background())
     fmt.Println(val, err) // "success!" <nil>
 }
+
 ```
 
 ### Recipe: CapDelay to limit maximum retry delay
@@ -701,6 +721,7 @@ builder := F.Pipe3(
     B.WithHeader("Authorization")("Bearer my-token"),
 )
 requester := RB.Requester(builder) // ReaderIOResult[*http.Request]
+
 ```
 
 ### Recipe: Full HTTP pipeline with JSON parsing
@@ -731,6 +752,7 @@ func fetchUser(id string) RIOE.ReaderIOResult[APIResponse] {
     client := RH.MakeClient(http.DefaultClient)
     return F.Pipe1(RB.Requester(builder), RH.ReadJSON[APIResponse](client))
 }
+
 ```
 
 ---
@@ -757,6 +779,7 @@ func resultToMessage(res R.Result[int]) string {
         func(n int) string { return fmt.Sprintf("Value: %d", n) },
     ))
 }
+
 ```
 
 ### Recipe: O.Fold for Option pattern matching
@@ -791,6 +814,7 @@ type (
     AppEffect[A any] = effect.Effect[AppConfig, A]
     AppConfig struct { DBURL string; APIKey string }
 )
+
 ```
 
 ---
@@ -827,6 +851,7 @@ r1 := intCodec.Decode(42)       // Right(42) -- Validation[int]
 r2 := intCodec.Decode("hello")  // Left(validation errors)
 s := intCodec.Encode(42)        // 42 (always succeeds)
 check := intCodec.Is(42)        // Right(42) -- type check
+
 ```
 
 ### Recipe: URL and other built-in codecs
@@ -905,6 +930,7 @@ func main() {
     fmt.Println(val, err)
     // {42 User_42 Hello, User_42!} <nil>
 }
+
 ```
 
 ### Recipe: Do-notation with lenses (BindL, LetL, ApSL)
@@ -920,6 +946,7 @@ eff := F.Pipe3(
     effect.LetL[Ctx](countLens, func(n int) int { return n * 2 }), // Count *= 2
     // effect.BindL(msgLens, func(s string) effect.Effect[Ctx, string] { ... }),
 )
+
 ```
 
 ---
@@ -954,6 +981,7 @@ func processWithLogging(input string) R.Result[int] {
         R.Map(func(n int) int { return n * 2 }),
     )
 }
+
 ```
 
 ### Recipe: ChainFirst / TapThunkK in Option and Effect
@@ -996,6 +1024,7 @@ func example() {
     _ = r2
     _ = r3
 }
+
 ```
 
 ### Recipe: Chaining multiple guards in a pipeline
@@ -1030,6 +1059,7 @@ func validateUsername(input string) R.Result[string] {
         )),
     )
 }
+
 ```
 
 ---
@@ -1041,7 +1071,7 @@ func validateUsername(input string) R.Result[string] {
 **Problem**: You have typical imperative Go code doing fetch -> validate -> save with error checking at each step.
 **Solution**: Wrap each step with `Eitherize1` or manual Result construction, compose with `Pipe` + `Chain`.
 
-#### fp-go pipeline version:
+#### fp-go pipeline version
 
 ```go
 package main
@@ -1111,6 +1141,7 @@ func processUser(id int) R.Result[*User] {
 func processUserGo(id int) (*User, error) {
     return R.Unwrap(processUser(id))
 }
+
 ```
 
 **Migration checklist**: (1) Wrap `(T,error)` funcs with `R.EitherizeN` (2) Wrap `func(T) error` validators with `R.FromError` (3) Replace `if err != nil` chains with `R.Chain`/`R.Map` (4) Add logging with `R.ChainFirst` (5) Add fallbacks with `R.OrElse`/`R.Alt` (6) Unwrap at boundaries with `R.Unwrap`.

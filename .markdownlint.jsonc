@@ -7,6 +7,8 @@
   "MD025": false,
   // Allow duplicate headings (common in reference docs)
   "MD024": false,
+  // Allow compact table style (intentional for dense reference tables)
+  "MD060": false,
   // Require consistent heading style
   "MD003": { "style": "atx" },
   // Require consistent list marker

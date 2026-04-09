@@ -17,6 +17,7 @@ Active functional programming guidance for Go projects using [fp-go/v2](https://
 
 ```bash
 claude plugin add github:franchb/fp-go-skill
+
 ```
 
 ## Usage
@@ -57,6 +58,7 @@ The skill loads a compact reference (~260 lines) by default and reads deeper doc
 This skill restricts its tools to read-only operations (`Read`, `Grep`, `Glob`, `LSP`) via `allowed-tools` in the SKILL.md frontmatter. It cannot execute commands, write files, or make network requests.
 
 All CI checks enforce:
+
 - Prompt injection pattern detection on PRs
 - Hidden Unicode character scanning
 - `allowed-tools` presence verification
@@ -70,6 +72,7 @@ See [SECURITY.md](SECURITY.md) for the vulnerability reporting policy.
 
 ```bash
 gh attestation verify <artifact> -R franchb/fp-go-skill
+
 ```
 
 ## License

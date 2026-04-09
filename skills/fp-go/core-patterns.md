@@ -8,7 +8,7 @@
 
 ## 1. Type Hierarchy
 
-```
+```text
 Option[A]                       -- may be absent
 Either[E, A]                    -- can fail with E
 Result[A]                       -- Either[error, A]
@@ -38,6 +38,7 @@ Layers (bottom to top):
     |
   Effect[C, A]           -- Reader[C, ctx->IO[Result[A]]]
                             full effect system with DI, context.Context, IO, error
+
 ```
 
 The `effect` package is the recommended top-level type for application code.
@@ -52,20 +53,25 @@ Use `Option`/`Either`/`Result` for pure data transformations.
 **Package**: `github.com/IBM/fp-go/v2/option`
 
 **Type definition**:
+
 ```go
 type Option[A any] struct {
     value  A
     isSome bool
 }
+
 ```
 
 **Kleisli and Operator types**:
+
 ```go
 type Kleisli[A, B any]  = func(A) Option[B]
 type Operator[A, B any] = Kleisli[Option[A], B]   // func(Option[A]) Option[B]
+
 ```
 
 **Construction**:
+
 ```go
 func Some[T any](value T) Option[T]
 func None[T any]() Option[T]
@@ -76,16 +82,20 @@ func FromNonZero[A comparable]() Kleisli[A, A]
 func FromNillable[A any](a *A) Option[*A]
 func FromValidation[A, B any](f func(A) (B, bool)) Kleisli[A, B]
 func TryCatch[A any](f func() (A, error)) Option[A]
+
 ```
 
 **Inspection**:
+
 ```go
 func IsSome[T any](val Option[T]) bool
 func IsNone[T any](val Option[T]) bool
 func Unwrap[A any](ma Option[A]) (A, bool)
+
 ```
 
 **Transformation**:
+
 ```go
 func Map[A, B any](f func(A) B) Operator[A, B]
 func MapTo[A, B any](b B) Operator[A, B]
@@ -95,32 +105,42 @@ func ChainFirst[A, B any](f Kleisli[A, B]) Operator[A, A]
 func Ap[B, A any](fa Option[A]) Operator[func(A) B, B]
 func Flatten[A any](mma Option[Option[A]]) Option[A]
 func Flap[B, A any](a A) Operator[func(A) B, B]
+
 ```
 
 **Extraction**:
+
 ```go
 func Fold[A, B any](onNone func() B, onSome func(A) B) func(Option[A]) B
 func MonadFold[A, B any](ma Option[A], onNone func() B, onSome func(A) B) B
 func GetOrElse[A any](onNone func() A) func(Option[A]) A
 func Reduce[A, B any](f func(B, A) B, initial B) func(Option[A]) B
+
 ```
 
 **Filtering**:
+
 ```go
 func Filter[A any](pred func(A) bool) Operator[A, A]
+
 ```
 
 **Alternative**:
+
 ```go
 func Alt[A any](that func() Option[A]) Operator[A, A]
+
 ```
 
 **Sequence**:
+
 ```go
 func Sequence2[T1, T2, R any](f func(T1, T2) Option[R]) func(Option[T1], Option[T2]) Option[R]
+
 ```
 
 **Example**:
+
 ```go
 import (
     O "github.com/IBM/fp-go/v2/option"
@@ -134,6 +154,7 @@ result := F.Pipe3(
     O.GetOrElse(func() string { return "no value" }),
 )
 // result == "value: 42"
+
 ```
 
 ---
@@ -143,21 +164,26 @@ result := F.Pipe3(
 **Package**: `github.com/IBM/fp-go/v2/either`
 
 **Type definition**:
+
 ```go
 type Either[E, A any] struct {
     r      A
     l      E
     isLeft bool
 }
+
 ```
 
 **Kleisli and Operator types**:
+
 ```go
 type Kleisli[E, A, B any]  = func(A) Either[E, B]
 type Operator[E, A, B any] = Kleisli[E, Either[E, A], B]
+
 ```
 
 **Construction**:
+
 ```go
 func Right[E, A any](value A) Either[E, A]
 func Left[A, E any](value E) Either[E, A]
@@ -169,17 +195,21 @@ func FromOption[A, E any](onNone func() E) func(Option[A]) Either[E, A]
 func FromError[A any](f func(A) error) func(A) Either[error, A]
 func TryCatch[FE func(error) E, E, A any](val A, err error, onThrow FE) Either[E, A]
 func TryCatchError[A any](val A, err error) Either[error, A]
+
 ```
 
 **Inspection**:
+
 ```go
 func IsLeft[E, A any](val Either[E, A]) bool
 func IsRight[E, A any](val Either[E, A]) bool
 func Unwrap[E, A any](ma Either[E, A]) (A, E)
 func UnwrapError[A any](ma Either[error, A]) (A, error)
+
 ```
 
 **Transformation**:
+
 ```go
 func Map[E, A, B any](f func(A) B) Operator[E, A, B]
 func MapTo[E, A, B any](b B) Operator[E, A, B]
@@ -194,9 +224,11 @@ func Ap[B, E, A any](fa Either[E, A]) Operator[E, func(A) B, B]
 func Flatten[E, A any](mma Either[E, Either[E, A]]) Either[E, A]
 func Swap[E, A any](val Either[E, A]) Either[A, E]
 func Flap[E, B, A any](a A) Operator[E, func(A) B, B]
+
 ```
 
 **Extraction**:
+
 ```go
 func Fold[E, A, B any](onLeft func(E) B, onRight func(A) B) func(Either[E, A]) B
 func MonadFold[E, A, B any](ma Either[E, A], onLeft func(E) B, onRight func(A) B) B
@@ -204,22 +236,28 @@ func GetOrElse[E, A any](onLeft func(E) A) func(Either[E, A]) A
 func Reduce[E, A, B any](f func(B, A) B, initial B) func(Either[E, A]) B
 func ToOption[E, A any](ma Either[E, A]) Option[A]
 func ToError[A any](e Either[error, A]) error
+
 ```
 
 **Alternative**:
+
 ```go
 func Alt[E, A any](that func() Either[E, A]) Operator[E, A, A]
 func AltW[E, E1, A any](that func() Either[E1, A]) Kleisli[E1, Either[E, A], A]
 func OrElse[E1, E2, A any](onLeft Kleisli[E2, E1, A]) Kleisli[E2, Either[E1, A], A]
+
 ```
 
 **Sequence**:
+
 ```go
 func Sequence2[E, T1, T2, R any](f func(T1, T2) Either[E, R]) func(Either[E, T1], Either[E, T2]) Either[E, R]
 func Sequence3[E, T1, T2, T3, R any](f func(T1, T2, T3) Either[E, R]) func(...) Either[E, R]
+
 ```
 
 **Example**:
+
 ```go
 import (
     E "github.com/IBM/fp-go/v2/either"
@@ -238,6 +276,7 @@ result := F.Pipe3(
     E.GetOrElse(func(err error) string { return "error: " + err.Error() }),
 )
 // result == "84"
+
 ```
 
 ---
@@ -247,15 +286,18 @@ result := F.Pipe3(
 **Package**: `github.com/IBM/fp-go/v2/result`
 
 **Type definition** (type alias):
+
 ```go
 type Result[T any] = Either[error, T]
 type Kleisli[A, B any] = func(A) Result[B]
 type Operator[A, B any] = Kleisli[Result[A], B]
+
 ```
 
 Result is `Either[error, A]` -- every function mirrors `either` with `E` fixed to `error`.
 
 **Key functions** (all delegate to `either`):
+
 ```go
 func Of[A any](value A) Result[A]
 func Right[A any](value A) Result[A]
@@ -278,9 +320,11 @@ func Alt[A any](that func() Result[A]) Operator[A, A]
 func OrElse[A any](onLeft Kleisli[error, A]) Operator[A, A]
 func Flatten[A any](mma Result[Result[A]]) Result[A]
 func InstanceOf[A any](a any) Result[A]
+
 ```
 
 **Example**:
+
 ```go
 import (
     R "github.com/IBM/fp-go/v2/result"
@@ -292,6 +336,7 @@ val, err := R.Unwrap(F.Pipe2(
     R.Map(func(n int) int { return n * 2 }),
 ))
 // val == 84, err == nil
+
 ```
 
 ---
@@ -301,15 +346,18 @@ val, err := R.Unwrap(F.Pipe2(
 **Package**: `github.com/IBM/fp-go/v2/io`
 
 **Type definition** (type alias):
+
 ```go
 type IO[A any] = func() A
 type Kleisli[A, B any] = func(A) IO[B]
 type Operator[A, B any] = Kleisli[IO[A], B]
+
 ```
 
 IO represents a lazy synchronous computation. Nothing executes until `io()` is called.
 
 **Construction**:
+
 ```go
 func Of[A any](a A) IO[A]                            // wraps pure value
 func FromIO[A any](a IO[A]) IO[A]                    // identity
@@ -317,9 +365,11 @@ func FromImpure[ANY ~func()](f ANY) IO[Void]          // void side effect
 func Defer[A any](gen func() IO[A]) IO[A]            // lazy IO creation
 func Memoize[A any](ma IO[A]) IO[A]                  // compute once
 var Now IO[time.Time]                                  // current timestamp
+
 ```
 
 **Transformation**:
+
 ```go
 func Map[A, B any](f func(A) B) Operator[A, B]
 func MapTo[A, B any](b B) Operator[A, B]
@@ -331,17 +381,21 @@ func ApSeq[B, A any](ma IO[A]) Operator[func(A) B, B]       // sequential
 func ApPar[B, A any](ma IO[A]) Operator[func(A) B, B]       // explicitly parallel
 func Flatten[A any](mma IO[IO[A]]) IO[A]
 func Flap[B, A any](a A) Operator[func(A) B, B]
+
 ```
 
 **Timing**:
+
 ```go
 func Delay[A any](delay time.Duration) Operator[A, A]
 func After[A any](timestamp time.Time) Operator[A, A]
 func WithTime[A any](a IO[A]) IO[Pair[Pair[time.Time, time.Time], A]]
 func WithDuration[A any](a IO[A]) IO[Pair[time.Duration, A]]
+
 ```
 
 **Example**:
+
 ```go
 import (
     IO "github.com/IBM/fp-go/v2/io"
@@ -354,6 +408,7 @@ greeting := F.Pipe2(
     IO.Delay[string](time.Second),
 )
 result := greeting() // waits 1 second, returns "Hello, World!"
+
 ```
 
 ---
@@ -363,15 +418,18 @@ result := greeting() // waits 1 second, returns "Hello, World!"
 **Package**: `github.com/IBM/fp-go/v2/ioresult`
 
 **Type definition** (type alias):
+
 ```go
 type IOResult[A any] = IO[Result[A]]    // func() Either[error, A]
 type Kleisli[A, B any] = func(A) IOResult[B]
 type Operator[A, B any] = Kleisli[IOResult[A], B]
+
 ```
 
 IOResult combines IO with Result. The computation is deferred and may fail.
 
 **Key functions** (same pattern as other monads):
+
 ```go
 func Of[A any](a A) IOResult[A]
 func Left[A any](e error) IOResult[A]
@@ -386,6 +444,7 @@ func Fold[A, B any](onLeft func(error) IO[B], onRight func(A) IO[B]) func(IOResu
 func Alt[A any](that func() IOResult[A]) Operator[A, A]
 func Flatten[A any](mma IOResult[IOResult[A]]) IOResult[A]
 func Memoize[A any](ma IOResult[A]) IOResult[A]
+
 ```
 
 ---
@@ -395,23 +454,28 @@ func Memoize[A any](ma IOResult[A]) IOResult[A]
 **Package**: `github.com/IBM/fp-go/v2/reader`
 
 **Type definition** (type alias):
+
 ```go
 type Reader[R, A any] = func(R) A
 type Kleisli[R, A, B any] = func(A) Reader[R, B]
 type Operator[R, A, B any] = Kleisli[R, Reader[R, A], B]
+
 ```
 
 Reader encodes dependency injection. `R` is the shared environment.
 
 **Construction**:
+
 ```go
 func Ask[R any]() Reader[R, R]                           // returns environment itself
 func Asks[R, A any](f Reader[R, A]) Reader[R, A]         // project from environment
 func Of[R, A any](a A) Reader[R, A]                      // constant, ignores environment
 func OfLazy[R, A any](fa func() A) Reader[R, A]          // deferred constant
+
 ```
 
 **Transformation**:
+
 ```go
 func Map[E, A, B any](f func(A) B) Operator[E, A, B]
 func MapTo[E, A, B any](b B) Operator[E, A, B]
@@ -421,14 +485,18 @@ func Ap[B, R, A any](fa Reader[R, A]) Operator[R, func(A) B, B]
 func Flatten[R, A any](mma Reader[R, Reader[R, A]]) Reader[R, A]
 func Compose[C, R, B any](ab Reader[R, B]) Kleisli[R, Reader[B, C], C]
 func Flap[R, B, A any](a A) Operator[R, func(A) B, B]
+
 ```
 
 **Execution**:
+
 ```go
 func Read[A, E any](e E) func(Reader[E, A]) A            // run with environment
+
 ```
 
 **Key distinction -- Chain vs Compose**:
+
 - `Chain`: Both readers share the SAME environment R. Second depends on the VALUE of the first.
 - `Compose`: First reader's output becomes the INPUT environment of the second.
 
@@ -439,12 +507,14 @@ func Read[A, E any](e E) func(Reader[E, A]) A            // run with environment
 **Package**: `github.com/IBM/fp-go/v2/readerioresult`
 
 **Type definition**:
+
 ```go
 type ReaderIOResult[R, A any] = Reader[R, IOResult[A]]
 // Expanded: func(R) func() Either[error, A]
 
 type Kleisli[R, A, B any] = func(A) ReaderIOResult[R, B]
 type Operator[R, A, B any] = Kleisli[R, ReaderIOResult[R, A], B]
+
 ```
 
 Combines Reader (dependency injection) + IO (side effects) + Result (error handling).
@@ -457,6 +527,7 @@ Same API pattern: Of, Map, Chain, ChainFirst, Ap, Fold, Alt, etc.
 **Package**: `github.com/IBM/fp-go/v2/effect`
 
 **Type definition**:
+
 ```go
 // Effect[C, A] = Reader[C, Reader[context.Context, IO[Result[A]]]]
 // Expanded: func(C) func(context.Context) func() Either[error, A]
@@ -465,11 +536,13 @@ type Effect[C, A any] = readerreaderioresult.ReaderReaderIOResult[C, A]
 type Thunk[A any] = ReaderIOResult[A]   // context.Context -> IO[Result[A]]
 type Kleisli[C, A, B any] = func(A) Effect[C, B]
 type Operator[C, A, B any] = func(Effect[C, A]) Effect[C, B]
+
 ```
 
 Effect is the recommended top-level monad. `C` is the application context (config, services), and `context.Context` is automatically threaded.
 
 **Construction**:
+
 ```go
 func Of[C, A any](a A) Effect[C, A]
 func Succeed[C, A any](a A) Effect[C, A]              // alias for Of
@@ -478,18 +551,22 @@ func FromThunk[C, A any](f Thunk[A]) Effect[C, A]
 func FromResult[C, A any](r Result[A]) Effect[C, A]
 func Asks[C, A any](r Reader[C, A]) Effect[C, A]      // project from context C
 func Suspend[C, A any](fa func() Effect[C, A]) Effect[C, A]
+
 ```
 
 **Transformation**:
+
 ```go
 func Map[C, A, B any](f func(A) B) Operator[C, A, B]
 func Chain[C, A, B any](f Kleisli[C, A, B]) Operator[C, A, B]
 func ChainFirst[C, A, B any](f Kleisli[C, A, B]) Operator[C, A, A]
 func Tap[C, A, ANY any](f Kleisli[C, A, ANY]) Operator[C, A, A]
 func Ap[B, C, A any](fa Effect[C, A]) Operator[C, func(A) B, B]
+
 ```
 
 **Lifting from other monads**:
+
 ```go
 func ChainIOK[C, A, B any](f io.Kleisli[A, B]) Operator[C, A, B]
 func ChainFirstIOK[C, A, B any](f io.Kleisli[A, B]) Operator[C, A, A]
@@ -500,9 +577,11 @@ func ChainReaderIOK[C, A, B any](f readerio.Kleisli[C, A, B]) Operator[C, A, B]
 func ChainThunkK[C, A, B any](f thunk.Kleisli[A, B]) Operator[C, A, B]
 func ChainFirstThunkK[C, A, B any](f thunk.Kleisli[A, B]) Operator[C, A, A]
 func TapThunkK[C, A, B any](f thunk.Kleisli[A, B]) Operator[C, A, A]
+
 ```
 
 **Context manipulation (dependency injection)**:
+
 ```go
 func Ask[C any]() Effect[C, C]                                           // read entire context
 func Asks[C, A any](r Reader[C, A]) Effect[C, A]                        // project from context
@@ -514,9 +593,11 @@ func LocalResultK[A, C1, C2 any](f result.Kleisli[C2, C1]) func(Effect[C1, A]) E
 func LocalThunkK[A, C1, C2 any](f thunk.Kleisli[C2, C1]) func(Effect[C1, A]) Effect[C2, A]   // Thunk-based
 func LocalEffectK[A, C1, C2 any](f Kleisli[C2, C2, C1]) func(Effect[C1, A]) Effect[C2, A]    // Effect-based
 func LocalReaderK[A, C1, C2 any](f reader.Kleisli[C2, C1]) func(Effect[C1, A]) Effect[C2, A] // Reader-based
+
 ```
 
 Context transformation strength (weakest to strongest):
+
 1. `Local` / `Contramap` -- pure function `C2 -> C1`
 2. `LocalResultK` -- may fail `C2 -> Result[C1]`
 3. `LocalIOK` -- IO side effects `C2 -> IO[C1]`
@@ -526,6 +607,7 @@ Context transformation strength (weakest to strongest):
 7. `LocalEffectK` -- full effect `C2 -> Effect[C2, C1]`
 
 **Filtering within Effects**:
+
 ```go
 func Filter[C, HKTA, A any](filter func(Predicate[A]) Endomorphism[HKTA]) func(Predicate[A]) Operator[C, HKTA, HKTA]
 func FilterArray[C, A any](p Predicate[A]) Operator[C, []A, []A]
@@ -533,32 +615,42 @@ func FilterIter[C, A any](p Predicate[A]) Operator[C, Seq[A], Seq[A]]
 func FilterMap[C, HKTA, HKTB, A, B any](filter func(option.Kleisli[A, B]) Reader[HKTA, HKTB]) func(option.Kleisli[A, B]) Operator[C, HKTA, HKTB]
 func FilterMapArray[C, A, B any](p option.Kleisli[A, B]) Operator[C, []A, []B]
 func FilterMapIter[C, A, B any](p option.Kleisli[A, B]) Operator[C, Seq[A], Seq[B]]
+
 ```
 
 **Branching**:
+
 ```go
 func Ternary[C, A, B any](pred func(A) bool, onTrue, onFalse Kleisli[C, A, B]) Kleisli[C, A, B]
+
 ```
 
 **Eitherize -- converting Go functions to Effects**:
+
 ```go
 func Eitherize[C, T any](f func(C, context.Context) (T, error)) Effect[C, T]
 func Eitherize1[C, A, T any](f func(C, context.Context, A) (T, error)) Kleisli[C, A, T]
+
 ```
 
 **Running Effects**:
+
 ```go
 func Provide[A, C any](c C) func(Effect[C, A]) ReaderIOResult[A]
 func Read[A, C any](c C) func(Effect[C, A]) Thunk[A]
 func RunSync[A any](fa ReaderIOResult[A]) func(context.Context) (A, error)
+
 ```
 
 **Do notation** (imperative-style effect composition):
+
 ```go
 func Do[C, S any](empty S) Effect[C, S]
+
 ```
 
 Bind operations for do-notation:
+
 ```go
 // Bind: run effectful computation, set result into state
 func Bind[C, S1, S2, T any](
@@ -578,9 +670,11 @@ func BindResultK[C, S1, S2, T any](setter, f) Operator[C, S1, S2]
 func BindReaderK[C, S1, S2, T any](setter, f) Operator[C, S1, S2]
 func BindReaderIOK[C, S1, S2, T any](setter, f) Operator[C, S1, S2]
 func BindEitherK[C, S1, S2, T any](setter, f) Operator[C, S1, S2]
+
 ```
 
 Do-notation example:
+
 ```go
 type State struct {
     User    User
@@ -613,9 +707,11 @@ pipeline := F.Pipe3(
         func(s State) int { return len(s.Posts) },
     ),
 )
+
 ```
 
 **Complete usage pattern**:
+
 ```go
 import (
     "context"
@@ -641,6 +737,7 @@ pipeline := F.Pipe1(
 cfg := AppConfig{APIKey: "secret"}
 value, err := E.RunSync(E.Provide[string](cfg)(pipeline))(context.Background())
 // value == "got: data from secret", err == nil
+
 ```
 
 ---
@@ -661,9 +758,11 @@ func Pipe1[F1 ~func(T0) T1, T0, T1 any](t0 T0, f1 F1) T1
 func Pipe2[F1 ~func(T0) T1, F2 ~func(T1) T2, T0, T1, T2 any](t0 T0, f1 F1, f2 F2) T2
 func Pipe3[...](t0 T0, f1 F1, f2 F2, f3 F3) T3
 // ... up to Pipe10+
+
 ```
 
 Usage -- value-first pipeline:
+
 ```go
 result := F.Pipe3(
     someValue,          // initial value
@@ -671,6 +770,7 @@ result := F.Pipe3(
     secondTransform,    // T1 -> T2
     thirdTransform,     // T2 -> T3
 )
+
 ```
 
 ### 3.2 Flow
@@ -682,9 +782,11 @@ func Flow1[F1 ~func(T0) T1, T0, T1 any](f1 F1) func(T0) T1
 func Flow2[F1 ~func(T0) T1, F2 ~func(T1) T2, T0, T1, T2 any](f1 F1, f2 F2) func(T0) T2
 func Flow3[...](f1 F1, f2 F2, f3 F3) func(T0) T3
 // ... up to Flow10+
+
 ```
 
 Usage -- point-free composition:
+
 ```go
 transform := F.Flow3(
     firstTransform,     // T0 -> T1
@@ -692,6 +794,7 @@ transform := F.Flow3(
     thirdTransform,     // T2 -> T3
 )
 result := transform(someValue)
+
 ```
 
 ### 3.3 Nullary
@@ -702,6 +805,7 @@ result := transform(someValue)
 func Nullary1[F1 ~func() T1, T1 any](f1 F1) func() T1
 func Nullary2[F1 ~func() T1, F2 ~func(T1) T2, T1, T2 any](f1 F1, f2 F2) func() T2
 func Nullary3[...](f1, f2, f3) func() T3
+
 ```
 
 ### 3.4 Curry / Uncurry
@@ -714,6 +818,7 @@ func Curry3[FCT ~func(T0, T1, T2) T3, ...](f FCT) func(T0) func(T1) func(T2) T3
 func Uncurry2[FCT ~func(T0) func(T1) T2, T0, T1, T2 any](f FCT) func(T0, T1) T2
 func Uncurry3[...](f FCT) func(T0, T1, T2) T3
 // up to Uncurry10+
+
 ```
 
 ### 3.5 Utility Functions
@@ -733,12 +838,15 @@ func SK[T1, T2 any](_ T1, t2 T2) T2                    // SKI combinator
 func Ternary[A, B any](pred func(A) bool, onTrue, onFalse func(A) B) func(A) B
 func Zero[A any]() A                                    // zero value of type
 func ToAny[A any](a A) any                              // upcast to any
+
 ```
 
 **Type**:
+
 ```go
 type Void = struct{}
 var VOID Void = struct{}{}
+
 ```
 
 ### 3.6 When to Use Pipe vs Flow
@@ -756,6 +864,7 @@ result := F.Pipe2(42, double, toString)
 transform := F.Flow2(double, toString)
 result1 := transform(42)
 result2 := transform(99)
+
 ```
 
 ---
@@ -771,34 +880,44 @@ result2 := transform(99)
 A Lens focuses on a field inside a product type (struct). It provides immutable get/set.
 
 **Type definition**:
+
 ```go
 type Lens[S, A any] struct {
     Get func(S) A
     Set func(S, A) S
 }
+
 ```
 
 **Construction**:
+
 ```go
 func MakeLens[GET ~func(S) A, SET ~func(S, A) S, S, A any](get GET, set SET) Lens[S, A]
 func MakeLensRef[GET ~func(*S) A, SET ~func(*S, A) *S, S, A any](get GET, set SET) Lens[*S, A]
+
 ```
 
 **Operations**:
+
 ```go
 func Get[S, A any](sa Lens[S, A]) func(S) A
 func Set[S, A any](sa Lens[S, A]) func(A) func(S) S
 func Modify[S any, FCT ~func(A) A, A any](f FCT) func(Lens[S, A]) func(S) S
 func Compose[S, A, B any](ab Lens[A, B]) func(Lens[S, A]) Lens[S, B]
+
 ```
 
 **Auto-generation**: Place in your Go file:
+
 ```go
 //go:generate go run github.com/IBM/fp-go/v2 lens --dir . --filename gen_lens.go
+
 ```
+
 This scans struct types and generates lenses for exported fields.
 
 **Example**:
+
 ```go
 type Address struct {
     Street string
@@ -834,6 +953,7 @@ cityLens := lens.MakeLens(
     func(a Address, c string) Address { a.City = c; return a },
 )
 personCityLens := F.Pipe1(addressLens, lens.Compose[Person](cityLens))
+
 ```
 
 ### 4.2 Prism
@@ -843,16 +963,20 @@ personCityLens := F.Pipe1(addressLens, lens.Compose[Person](cityLens))
 A Prism focuses on a case of a sum type (variant). It may fail to match.
 
 **Type definition**:
+
 ```go
 type Prism[S, A any] struct {
     GetOption  func(S) Option[A]
     ReverseGet func(A) S
 }
+
 ```
 
 **Construction**:
+
 ```go
 func MakePrism[S, A any](getOption func(S) Option[A], reverseGet func(A) S) Prism[S, A]
+
 ```
 
 ### 4.3 Iso
@@ -862,14 +986,17 @@ func MakePrism[S, A any](getOption func(S) Option[A], reverseGet func(A) S) Pris
 An Iso is a lossless bidirectional transformation between types.
 
 **Type definition**:
+
 ```go
 type Iso[S, A any] struct {
     Get        func(S) A
     ReverseGet func(A) S
 }
+
 ```
 
 **Construction and operations**:
+
 ```go
 func MakeIso[S, A any](get func(S) A, reverse func(A) S) Iso[S, A]
 func Id[S any]() Iso[S, S]
@@ -879,9 +1006,11 @@ func Modify[S any, FCT ~func(A) A, A any](f FCT) func(Iso[S, A]) Endomorphism[S]
 func Unwrap[A, S any](s S) func(Iso[S, A]) A               // alias: To
 func Wrap[S, A any](a A) func(Iso[S, A]) S                 // alias: From
 func IMap[S, A, B any](ab func(A) B, ba func(B) A) func(Iso[S, A]) Iso[S, B]
+
 ```
 
 **Example**:
+
 ```go
 import "github.com/IBM/fp-go/v2/optics/iso"
 
@@ -891,6 +1020,7 @@ celsiusToFahrenheit := iso.MakeIso(
 )
 f := celsiusToFahrenheit.Get(100.0)        // 212.0
 c := celsiusToFahrenheit.ReverseGet(212.0) // 100.0
+
 ```
 
 ### 4.4 Optional (Lens + Option)
@@ -904,6 +1034,7 @@ type OptionalLens[S, A any] struct {
     GetOption func(S) Option[A]
     Set       func(S, A) S
 }
+
 ```
 
 ### 4.5 Traversal
@@ -919,6 +1050,7 @@ Traversals focus on multiple targets within a structure.
 Codecs combine encoding and decoding with validation, built on top of optics.
 
 Sub-packages:
+
 - `optics/codec/decode` -- decoding monads
 - `optics/codec/validate` -- validation with accumulated errors
 - `optics/codec/validation` -- validation monad
@@ -940,6 +1072,7 @@ func FromStrictEquals[T comparable]() Eq[T]
 func FromEquals[T any](c func(x, y T) bool) Eq[T]
 func Empty[T any]() Eq[T]                              // always true
 func Equals[T any](eq Eq[T]) func(T) func(T) bool      // curried
+
 ```
 
 Laws: reflexive, symmetric, transitive.
@@ -976,12 +1109,15 @@ func Clamp[A any](o Ord[A]) func(A, A) func(A) A
 
 // Built-in
 func OrdTime() Ord[time.Time]
+
 ```
 
 **Example**:
+
 ```go
 type Person struct { Name string; Age int }
 personByAge := ord.Contramap(func(p Person) int { return p.Age })(ord.FromStrictCompare[int]())
+
 ```
 
 ### 5.3 Semigroup
@@ -1000,6 +1136,7 @@ func Last[A any]() Semigroup[A]                             // always second arg
 func FunctionSemigroup[A, B any](s Semigroup[B]) Semigroup[func(A) B]
 func ConcatWith[A any](s Semigroup[A]) func(A) func(A) A   // curried, left first
 func AppendTo[A any](s Semigroup[A]) func(A) func(A) A     // curried, right first
+
 ```
 
 Law: associativity -- `Concat(Concat(x, y), z) == Concat(x, Concat(y, z))`
@@ -1017,11 +1154,13 @@ type Monoid[A any] interface {
 func MakeMonoid[A any](c func(A, A) A, e A) Monoid[A]
 func Reverse[A any](m Monoid[A]) Monoid[A]
 func ToSemigroup[A any](m Monoid[A]) Semigroup[A]
+
 ```
 
 Laws: associativity + left/right identity (`Concat(Empty(), x) == x`).
 
 **Common monoids** (in `number`, `string`, `boolean` packages):
+
 - `number.MonoidSum[int]()` -- addition with 0
 - `number.MonoidProduct[int]()` -- multiplication with 1
 - `string.Monoid` -- concatenation with ""
@@ -1041,6 +1180,7 @@ either.ApplicativeMonoid[E, A](m monoid.Monoid[A]) monoid.Monoid[Either[E, A]]
 
 // First-success alternative semantics
 effect.AlternativeMonoid[C, A](m monoid.Monoid[A]) monoid.Monoid[Effect[C, A]]
+
 ```
 
 ---
@@ -1057,6 +1197,7 @@ Import convention: `A "github.com/IBM/fp-go/v2/array"`
 func From[A any](data ...A) []A
 func Of[A any](a A) []A                              // single-element array
 func Empty[A any]() []A                               // empty array
+
 ```
 
 ### 6.2 Transformation
@@ -1065,6 +1206,7 @@ func Empty[A any]() []A                               // empty array
 func Map[A, B any](f func(A) B) Operator[A, B]                    // Operator[A, B] = func([]A) []B
 func MapWithIndex[A, B any](f func(int, A) B) Operator[A, B]
 func MapRef[A, B any](f func(*A) B) Operator[A, B]                // avoids copying
+
 ```
 
 ### 6.3 Filtering
@@ -1075,6 +1217,7 @@ func FilterWithIndex[A any](pred func(int, A) bool) Operator[A, A]
 func FilterRef[A any](pred func(*A) bool) Operator[A, A]
 func FilterMap[A, B any](f option.Kleisli[A, B]) Operator[A, B]   // map + filter in one
 func FilterMapWithIndex[A, B any](f func(int, A) Option[B]) Operator[A, B]
+
 ```
 
 ### 6.4 Folding
@@ -1084,6 +1227,7 @@ func Reduce[A, B any](f func(B, A) B, initial B) func([]A) B
 func ReduceWithIndex[A, B any](f func(int, B, A) B, initial B) func([]A) B
 func ReduceRight[A, B any](f func(A, B) B, initial B) func([]A) B
 func ReduceRightWithIndex[A, B any](f func(int, A, B) B, initial B) func([]A) B
+
 ```
 
 ### 6.5 Element Access
@@ -1092,6 +1236,7 @@ func ReduceRightWithIndex[A, B any](f func(int, A, B) B, initial B) func([]A) B
 func Head[A any](as []A) Option[A]
 func Last[A any](as []A) Option[A]
 func Tail[A any](as []A) Option[[]A]
+
 ```
 
 ### 6.6 Building
@@ -1101,6 +1246,7 @@ func Append[A any](as []A, a A) []A
 func Prepend[A any](head A) Operator[A, A]             // func([]A) []A
 func Concat[A any](suffix []A) Operator[A, A]           // func([]A) []A
 func PrependAll[A any](middle A) Operator[A, A]         // intersperse
+
 ```
 
 ### 6.7 Sorting
@@ -1109,6 +1255,7 @@ func PrependAll[A any](middle A) Operator[A, A]         // intersperse
 func Sort[T any](ord O.Ord[T]) Operator[T, T]
 func SortByKey[K, T any](ord O.Ord[K], f func(T) K) Operator[T, T]
 func SortBy[T any](ord []O.Ord[T]) Operator[T, T]
+
 ```
 
 ### 6.8 Zipping
@@ -1116,6 +1263,7 @@ func SortBy[T any](ord []O.Ord[T]) Operator[T, T]
 ```go
 func Zip[A, B any](fb []B) func([]A) []pair.Pair[A, B]
 func ZipWith[FCT ~func(A, B) C, A, B, C any](fa []A, fb []B, f FCT) []C
+
 ```
 
 ### 6.9 Traversal / Sequence
@@ -1134,6 +1282,7 @@ result.SequenceArray[A any](arr []Result[A]) Result[[]A]
 
 // In effect package:
 effect.TraverseArray[C, A, B any](f func(A) Effect[C, B]) func([]A) Effect[C, []B]
+
 ```
 
 ### 6.10 Monoid for arrays
@@ -1141,6 +1290,7 @@ effect.TraverseArray[C, A, B any](f func(A) Effect[C, B]) func([]A) Effect[C, []
 ```go
 // In array/magma package:
 func ConcatAll[A any](m monoid.Monoid[A]) func([]A) A
+
 ```
 
 ### 6.11 NonEmptyArray
@@ -1158,6 +1308,7 @@ func Head[A any](as NonEmptyArray[A]) A               // always succeeds
 func Tail[A any](as NonEmptyArray[A]) []A
 func Map[A, B any](f func(A) B) Operator[A, B]
 func Reduce[A, B any](f func(B, A) B, initial B) func(NonEmptyArray[A]) B
+
 ```
 
 ---
@@ -1177,24 +1328,29 @@ Instead of `Option[A]` struct, uses `(A, bool)` tuples:
 ```go
 type Kleisli[A, B any] = func(A) (B, bool)       // was: func(A) Option[B]
 type Operator[A, B any] = func(A, bool) (B, bool) // was: func(Option[A]) Option[B]
+
 ```
 
 **Construction**:
+
 ```go
 func Some[A any](a A) (A, bool)                   // returns (a, true)
 func None[A any]() (A, bool)                       // returns (zero, false)
 func Of[A any](a A) (A, bool)                     // alias for Some
 func FromPredicate[A any](pred func(A) bool) Kleisli[A, A]
 func FromNillable[A any](a *A) (*A, bool)
+
 ```
 
 **Transformation**:
+
 ```go
 func Map[A, B any](f func(A) B) Operator[A, B]
 func MapTo[A, B any](b B) Operator[A, B]
 func Ap[B, A any](fa A, faok bool) Operator[func(A) B, B]
 func Fold[A, B any](onNone func() B, onSome func(A) B) func(A, bool) B
 func GetOrElse[A any](onNone func() A) func(A, bool) A
+
 ```
 
 ### 7.2 Idiomatic Result
@@ -1206,14 +1362,17 @@ Instead of `Either[error, A]` struct, uses `(A, error)` tuples:
 ```go
 type Kleisli[A, B any] = func(A) (B, error)        // standard Go pattern
 type Operator[A, B any] = func(A, error) (B, error) // transforms (value, error) pairs
+
 ```
 
 **Construction**:
+
 ```go
 func Left[A any](err error) (A, error)              // returns (zero, err)
 func Right[A any](a A) (A, error)                    // returns (a, nil)
 func IsLeft[A any](_ A, err error) bool              // err != nil
 func IsRight[A any](_ A, err error) bool             // err == nil
+
 ```
 
 ### 7.3 Differences Between Standard and Idiomatic
@@ -1241,6 +1400,7 @@ val, err := result.Unwrap(res)
 
 // Go tuple -> Standard Result: use TryCatchError
 res := result.TryCatchError(val, err)
+
 ```
 
 ---
@@ -1276,6 +1436,7 @@ import (
     N "github.com/IBM/fp-go/v2/number"
     S "github.com/IBM/fp-go/v2/string"
 )
+
 ```
 
 ### 8.3 The `MonadX` vs `X` Pattern
@@ -1288,6 +1449,7 @@ result := option.MonadMap(someOpt, transform)
 
 // Curried -- returns an operator for Pipe/Flow
 result := F.Pipe1(someOpt, option.Map(transform))
+
 ```
 
 Always prefer the curried form with `Pipe`/`Flow` for composition.
@@ -1309,6 +1471,7 @@ result := F.Pipe2(
         return R.Left[string](err)
     }),
 )
+
 ```
 
 ### 9.2 Validation with Either
@@ -1324,6 +1487,7 @@ validated := V.SequenceT2(
     validateName(input),
     validateAge(input),
 )
+
 ```
 
 ### 9.3 Dependency Injection with Effect
@@ -1346,6 +1510,7 @@ func getUser(id int) EFF.Effect[Services, User] {
 var getUserEff = EFF.Eitherize1(func(svc Services, ctx context.Context, id int) (User, error) {
     return svc.DB.QueryRowContext(ctx, "SELECT ...").Scan(...)
 })
+
 ```
 
 ### 9.4 Array Pipeline
@@ -1359,6 +1524,7 @@ result := F.Pipe4(
     A.Head,
 )
 // result: Option[string]
+
 ```
 
 ### 9.5 Traverse -- Fail-Fast on Collections
@@ -1372,6 +1538,7 @@ parsed := F.Pipe1(
     }),
 )
 // parsed: Result[[]int] = Right([1, 2, 3])
+
 ```
 
 ### 9.6 Memoization
@@ -1383,6 +1550,7 @@ expensiveIO := IO.Memoize(func() int {
     return computeExpensiveValue()
 })
 // First call computes, subsequent calls return cached result
+
 ```
 
 ---
@@ -1395,6 +1563,7 @@ fp-go uses `//go:generate` annotations for auto-generating boilerplate.
 
 ```go
 //go:generate go run github.com/IBM/fp-go/v2 lens --dir . --filename gen_lens.go
+
 ```
 
 Generates lenses for all exported struct fields in the package.
@@ -1404,6 +1573,7 @@ Add `--include-test-files` to also scan test files.
 
 ```go
 //go:generate go run github.com/IBM/fp-go/v2 option --count 10 --filename gen.go
+
 ```
 
 Generates `Pipe`, `Flow`, `Curry`, `Uncurry`, `Sequence`, and other arity-dependent
@@ -1413,7 +1583,7 @@ functions up to the specified count.
 
 ## 11. Quick Reference: Choosing the Right Type
 
-```
+```text
 Do I need error handling?
   No  -> Option[A] (presence/absence)
   Yes -> Do I need a typed error?
@@ -1427,6 +1597,7 @@ Do I need side effects?
            Yes -> Do I need context.Context?
                     No  -> ReaderIOResult[R, A]
                     Yes -> Effect[C, A]  (recommended)
+
 ```
 
 **Rule of thumb**: Start with `Effect` for application code. Use `Option`/`Result` for pure data transformations. Use `IO` only when you need lazy computation without errors.
@@ -1443,6 +1614,7 @@ These are available but less commonly used directly. They exist as layers in the
 
 ```go
 type IOEither[E, A any] = IO[Either[E, A]]   // func() Either[E, A]
+
 ```
 
 IOEither with typed error E. IOResult is the `E = error` specialization.
@@ -1453,6 +1625,7 @@ IOEither with typed error E. IOResult is the `E = error` specialization.
 
 ```go
 type IOOption[A any] = IO[Option[A]]   // func() Option[A]
+
 ```
 
 IO with optional result. Useful when absence is expected (not an error).
@@ -1463,6 +1636,7 @@ IO with optional result. Useful when absence is expected (not an error).
 
 ```go
 type ReaderResult[R, A any] = Reader[R, Result[A]]   // func(R) Either[error, A]
+
 ```
 
 Reader with error handling but no IO.
@@ -1473,6 +1647,7 @@ Reader with error handling but no IO.
 
 ```go
 type ReaderIO[R, A any] = Reader[R, IO[A]]   // func(R) func() A
+
 ```
 
 Reader with IO but no error handling.
@@ -1483,6 +1658,7 @@ Reader with IO but no error handling.
 
 ```go
 type ReaderOption[R, A any] = Reader[R, Option[A]]   // func(R) Option[A]
+
 ```
 
 Reader with optional result.
@@ -1493,6 +1669,7 @@ Reader with optional result.
 
 ```go
 type ReaderIOEither[R, E, A any] = Reader[R, IOEither[E, A]]  // func(R) func() Either[E, A]
+
 ```
 
 Full reader + IO + typed error. ReaderIOResult is the `E = error` specialization.
@@ -1504,6 +1681,7 @@ Full reader + IO + typed error. ReaderIOResult is the `E = error` specialization
 ```go
 type State[S, A any] = func(S) Pair[A, S]         // pure stateful computation
 type StateIO[S, A any] = func(S) IO[Pair[A, S]]   // stateful IO computation
+
 ```
 
 State monads thread mutable state through a computation.
@@ -1520,12 +1698,15 @@ type Pair[L, R any] struct { /* private fields */ }
 func MakePair[L, R any](l L, r R) Pair[L, R]
 func Head[L, R any](p Pair[L, R]) L
 func Tail[L, R any](p Pair[L, R]) R
+
 ```
 
 Pair is a functor over the Tail (right) element:
+
 ```go
 func Map[L, A, B any](f func(A) B) func(Pair[L, A]) Pair[L, B]
 func BiMap[L1, L2, R1, R2 any](f func(L1) L2, g func(R1) R2) func(Pair[L1, R1]) Pair[L2, R2]
+
 ```
 
 ---
@@ -1543,6 +1724,7 @@ func Or[A any](second Predicate[A]) func(Predicate[A]) Predicate[A]
 func IsZero[A comparable]() Predicate[A]
 func IsNonZero[A comparable]() Predicate[A]
 func IsEqual[A any](eq Eq[A]) func(A) Predicate[A]
+
 ```
 
 ---
@@ -1555,11 +1737,14 @@ func IsEqual[A any](eq Eq[A]) func(A) Predicate[A]
 type Endomorphism[A any] = func(A) A
 
 func Identity[A any]() Endomorphism[A]
+
 ```
 
 Endomorphisms form a monoid under composition:
+
 ```go
 func Monoid[A any]() monoid.Monoid[Endomorphism[A]]  // concat = compose, empty = identity
+
 ```
 
 ---
@@ -1577,6 +1762,7 @@ func Retrying[C, A any](
     action func(retry.RetryStatus) Effect[C, A],
     check func(Result[A]) bool,
 ) Effect[C, A]
+
 ```
 
 ---

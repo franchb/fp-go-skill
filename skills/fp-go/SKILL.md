@@ -113,6 +113,7 @@ val, err := EFF.RunSync(EFF.Provide[*User](myDeps)(fetchUser))(ctx)
 // Optics
 nameLens := L.MakeLens(func(p Person) string { return p.Name }, func(p Person, n string) Person { p.Name = n; return p })
 updated := nameLens.Set("Bob")(person)
+
 ```
 
 ---
@@ -122,6 +123,7 @@ updated := nameLens.Set("Bob")(person)
 ## Mode 1: Auto-Detect
 
 When the project imports `github.com/IBM/fp-go/v2`, silently apply these conventions:
+
 - Use the import aliases from the table above
 - Follow data-last patterns in all generated fp-go code
 - Use proper type param ordering (non-inferrable first)
@@ -135,18 +137,23 @@ When the project imports `github.com/IBM/fp-go/v2`, silently apply these convent
 When the user asks "which type should I use?" or is writing a new function:
 
 1. **Ask**: Does the function perform I/O (network, disk, database)?
+
    - No → pure function, no monad needed (or `Result[A]` if it can fail)
    - Yes → continue
 2. **Ask**: Can it fail with an error?
+
    - No → `IO[A]` (rare in practice)
    - Yes → continue
 3. **Ask**: Does it need `context.Context` (cancellation, deadlines)?
+
    - No → `IOResult[A]`
    - Yes → continue
 4. **Ask**: Does it need typed dependencies (DB, config, services)?
+
    - No → `ReaderIOResult[A]` via `context/readerioresult`
    - Yes → `Effect[C, A]` where C is the dependency struct
 5. **Ask**: Is this a hot path (>1000 req/s)?
+
    - Yes → use idiomatic variant (`idiomatic/context/readerresult` or `idiomatic/ioresult`)
    - No → standard is fine
 
@@ -188,6 +195,7 @@ For detailed recipes, read `cookbook.md` from this skill's directory.
 ## Mode 5: Testing
 
 When the project imports `github.com/franchb/fptest`, silently apply testing conventions:
+
 - Use the fptest-go import aliases from the table above
 - Prefer property-based tests over example-based for algebraic properties
 - Use `assert.AssertSome`/`AssertRight`/`AssertOk`/`AssertEffect` instead of manual unwrapping

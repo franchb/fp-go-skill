@@ -6,6 +6,7 @@
 > Generated from source code. Intended for LLM consumption during code generation.
 >
 > **Conventions:**
+>
 > - Curried form (e.g., `Map(f)(fa)`) is the primary API
 > - `Monad*` prefixed = uncurried variants (take all args at once)  
 > - `Operator[A, B]` = `func(Type[A]) Type[B]` (composable pipeline stage)
@@ -34,7 +35,6 @@
 
 ---
 
-
 ---
 
 # Core Monads
@@ -46,6 +46,7 @@ Import: `import O "github.com/IBM/fp-go/v2/option"`
 Option represents an optional value: Some(value) or None. Type-safe alternative to nil pointers.
 
 Key types:
+
 - `Option[A]` -- the core type, a struct wrapping a value or empty
 - `Kleisli[A, B] = func(A) Option[B]` -- effectful function returning Option
 - `Operator[A, B] = Kleisli[Option[A], B]` -- composable pipeline operator
@@ -205,6 +206,7 @@ func (s Option[A]) MarshalJSON() ([]byte, error)
 func (s Option[A]) String() string
 func (s *Option[A]) UnmarshalJSON(data []byte) error
 type Seq[T any] = iter.Seq[T]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/either`
@@ -214,6 +216,7 @@ Import: `import E "github.com/IBM/fp-go/v2/either"`
 Either represents a value of one of two types: Left (error) or Right (success).
 
 Key types:
+
 - `Either[E, A]` -- discriminated union: Left[E] or Right[A]
 - `Kleisli[E, A, B] = func(A) Either[E, B]` -- effectful function
 - `Operator[E, A, B] = Kleisli[E, Either[E, A], B]` -- pipeline operator
@@ -444,6 +447,7 @@ type Option[A any] = option.Option[A]
 func ToOption[E, A any](ma Either[E, A]) Option[A]
 type Pair[L, R any] = pair.Pair[L, R]
 type Predicate[A any] = predicate.Predicate[A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/result`
@@ -453,6 +457,7 @@ Import: `import R "github.com/IBM/fp-go/v2/result"`
 Result is Either specialized with error as Left type.
 
 Key types:
+
 - `Result[A] = Either[error, A]` -- the core type
 - `Kleisli[A, B] = func(A) Result[B]` -- effectful function
 - `Operator[A, B] = Kleisli[Result[A], B]` -- pipeline operator
@@ -675,6 +680,7 @@ func SequenceTuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9 any](t T.Tuple9[Result[T1
 func TryCatch[FE Endomorphism[error], A any](val A, err error, onThrow FE) Result[A]
 func TryCatchError[A any](val A, err error) Result[A]
 func Zero[A any]() Result[A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/io`
@@ -684,6 +690,7 @@ Import: `import "github.com/IBM/fp-go/v2/io"`
 IO represents a synchronous side-effectful computation.
 
 Key types:
+
 - `IO[A] = func() A` -- lazy computation
 - `Kleisli[A, B] = func(A) IO[B]` -- effectful function
 
@@ -879,6 +886,7 @@ func ApplySemigroup[A any](s S.Semigroup[A]) Semigroup[A]
 type Seq[T any] = iter.Seq[T]
 type Trampoline[B, L any] = tailrec.Trampoline[B, L]
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/iooption`
@@ -1050,6 +1058,7 @@ type Option[A any] = option.Option[A]
 type Predicate[A any] = predicate.Predicate[A]
 type Prism[S, T any] = prism.Prism[S, T]
 type Trampoline[B, L any] = tailrec.Trampoline[B, L]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/ioeither`
@@ -1310,6 +1319,7 @@ type Semigroup[E, A any] = semigroup.Semigroup[IOEither[E, A]]
 func AltSemigroup[E, A any]() Semigroup[E, A]
 type Trampoline[B, L any] = tailrec.Trampoline[B, L]
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/ioresult`
@@ -1578,6 +1588,7 @@ type Result[A any] = result.Result[A]
 type Semigroup[A any] = semigroup.Semigroup[IOResult[A]]
 func AltSemigroup[A any]() Semigroup[A]
 type Void = function.Void
+
 ```
 
 ---
@@ -1591,6 +1602,7 @@ Import: `import "github.com/IBM/fp-go/v2/reader"`
 Reader represents a computation depending on environment R.
 
 Key types:
+
 - `Reader[R, A] = func(R) A`
 - `Kleisli[R, A, B] = func(A) Reader[R, B]`
 
@@ -1689,6 +1701,7 @@ func SequenceT4[R, A, B, C, D any](a Reader[R, A], b Reader[R, B], c Reader[R, C
 func WithLocal[A, R1, R2 any](fa Reader[R1, A], f func(R2) R1) Reader[R2, A]
 type Seq[T any] = iter.Seq[T]
 type Trampoline[B, L any] = tailrec.Trampoline[B, L]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/readeroption`
@@ -1773,6 +1786,7 @@ func SequenceT3[E, A, B, C any](
 func SequenceT4[E, A, B, C, D any](
 func Some[E, A any](r A) ReaderOption[E, A]
 func SomeReader[E, A any](r Reader[E, A]) ReaderOption[E, A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/readereither`
@@ -1880,6 +1894,7 @@ func SequenceT1[L, E, A any](a ReaderEither[E, L, A]) ReaderEither[E, L, T.Tuple
 func SequenceT2[L, E, A, B any](
 func SequenceT3[L, E, A, B, C any](
 func SequenceT4[L, E, A, B, C, D any](
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/readerio`
@@ -1986,6 +2001,7 @@ func SequenceT3[R, A, B, C any](a ReaderIO[R, A], b ReaderIO[R, B], c ReaderIO[R
 func SequenceT4[R, A, B, C, D any](a ReaderIO[R, A], b ReaderIO[R, B], c ReaderIO[R, C], d ReaderIO[R, D]) ReaderIO[R, T.Tuple4[A, B, C, D]]
 type Trampoline[B, L any] = tailrec.Trampoline[B, L]
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/readeriooption`
@@ -2055,6 +2071,7 @@ func SequenceT3[R, A, B, C any](
 func SequenceT4[R, A, B, C, D any](
 func Some[R, A any](r A) ReaderIOOption[R, A]
 func SomeReader[R, A any](r Reader[R, A]) ReaderIOOption[R, A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/readerioeither`
@@ -2294,6 +2311,7 @@ func Swap[R, E, A any](val ReaderIOEither[R, E, A]) ReaderIOEither[R, A, E]
 func ThrowError[R, A, E any](e E) ReaderIOEither[R, E, A]
 func TryCatch[R, E, A any](f func(R) func() (A, error), onThrow func(error) E) ReaderIOEither[R, E, A]
 type ReaderOption[R, A any] = readeroption.ReaderOption[R, A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/readerioresult`
@@ -2566,6 +2584,7 @@ type ReaderOption[R, A any] = readeroption.ReaderOption[R, A]
 type ReaderResult[R, A any] = readerresult.ReaderResult[R, A]
 type Result[A any] = result.Result[A]
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/readerresult`
@@ -2702,6 +2721,7 @@ func SequenceT2[L, A, B any](
 func SequenceT3[L, A, B, C any](
 func SequenceT4[L, A, B, C, D any](
 type Result[A any] = result.Result[A]
+
 ```
 
 ---
@@ -3061,6 +3081,7 @@ type Seq[A any] = iter.Seq[A]
 type State[S, A any] = state.State[S, A]
 type Trampoline[B, L any] = tailrec.Trampoline[B, L]
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/context/readerresult`
@@ -3172,6 +3193,7 @@ func SequenceT4[A, B, C, D any](a ReaderResult[A], b ReaderResult[B], c ReaderRe
 func WithContext[A any](ma ReaderResult[A]) ReaderResult[A]
 type Result[A any] = result.Result[A]
 type Trampoline[A, B any] = tailrec.Trampoline[A, B]
+
 ```
 
 ---
@@ -3185,6 +3207,7 @@ Import: `import "github.com/IBM/fp-go/v2/effect"`
 The Effect system: dependency-injection-aware effect type.
 
 Key types:
+
 - `Effect[C, A] = ReaderReaderIOResult[C, A]` -- reads config C, uses context.Context, produces Result[A]
 - Use `Provide` to supply config, `Read` to extract thunks
 
@@ -3286,6 +3309,7 @@ type ReaderIOResult[A any] = readerioresult.ReaderIOResult[A]
 type Result[A any] = result.Result[A]
 type Seq[A any] = iter.Seq[A]
 type Thunk[A any] = ReaderIOResult[A]
+
 ```
 
 ---
@@ -3348,6 +3372,7 @@ func MonadMap[S any, FCT ~func(A) B, A, B any](fa State[S, A], f FCT) State[S, B
 func Of[S, A any](a A) State[S, A]
 func Put[S any]() State[S, Void]
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/stateio`
@@ -3410,6 +3435,7 @@ func (o *StateIOMonad[S, A, B]) Map(f func(A) B) Operator[S, A, B]
 func (o *StateIOMonad[S, A, B]) Of(a A) StateIO[S, A]
 type StateIOPointed[
 func (o *StateIOPointed[S, A]) Of(a A) StateIO[S, A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/statereaderioeither`
@@ -3481,6 +3507,7 @@ func MonadChainReaderIOEitherK[S, R, E, A, B any](ma StateReaderIOEither[S, R, E
 func MonadMap[S, R, E, A, B any](fa StateReaderIOEither[S, R, E, A], f func(A) B) StateReaderIOEither[S, R, E, B]
 func Of[S, R, E, A any](a A) StateReaderIOEither[S, R, E, A]
 func Right[S, R, E, A any](a A) StateReaderIOEither[S, R, E, A]
+
 ```
 
 ---
@@ -3526,6 +3553,7 @@ type Operator[S, A, B any] = Kleisli[S, Lens[S, A], B]
 func Compose[S, A, B any](ab Lens[A, B]) Operator[S, A, B]
 func ComposeRef[S, A, B any](ab Lens[A, B]) Operator[*S, A, B]
 func IMap[S any, AB ~func(A) B, BA ~func(B) A, A, B any](ab AB, ba BA) Operator[S, A, B]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/optics/prism`
@@ -3591,6 +3619,7 @@ type Reader[R, T any] = reader.Reader[R, T]
 type Result[T any] = result.Result[T]
 type URLPrisms struct {
 func MakeURLPrisms() URLPrisms
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/optics/iso`
@@ -3632,6 +3661,7 @@ func (i Iso[S, T]) String() string
 type NonEmptyArray[A any] = nonempty.NonEmptyArray[A]
 type Number = number.Number
 type Pair[A, B any] = pair.Pair[A, B]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/optics/optional`
@@ -3670,6 +3700,7 @@ func (o Optional[S, T]) Format(f fmt.State, c rune)
 func (o Optional[S, T]) GoString() string
 func (o Optional[S, T]) LogValue() slog.Value
 func (o Optional[S, T]) String() string
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/optics/traversal`
@@ -3688,6 +3719,7 @@ func GetAll[S, A any](s S) func(sa G.Traversal[S, A, C.Const[[]A, S], C.Const[[]
 func Id[S, A any]() G.Traversal[S, S, A, A]
 func Modify[S, A any](f func(A) A) func(sa G.Traversal[S, A, S, A]) func(S) S
 func Set[S, A any](a A) func(sa G.Traversal[S, A, S, A]) func(S) S
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/optics/codec`
@@ -3759,6 +3791,7 @@ func URL() Type[*url.URL, string, string]
 type Validate[I, A any] = validate.Validate[I, A]
 type Validation[A any] = validation.Validation[A]
 type Void = function.Void
+
 ```
 
 ---
@@ -3772,6 +3805,7 @@ Import: `import F "github.com/IBM/fp-go/v2/function"`
 Core functional utilities.
 
 Key exports:
+
 - `Pipe1..Pipe20` -- left-to-right function application
 - `Flow1..Flow20` -- left-to-right function composition  
 - `Curry2..Curry5` / `Uncurry2..Uncurry5`
@@ -4028,6 +4062,7 @@ func Variadic9[T1, T2, T3, T4, T5, T6, T7, T8, T9, V, R any](f func(T1, T2, T3, 
 func Zero[A any]() A
 type Void = struct{}
 var VOID Void = struct{}{}
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/array`
@@ -4148,6 +4183,7 @@ func First[A any](as []A) Option[A]
 func Head[A any](as []A) Option[A]
 func Last[A any](as []A) Option[A]
 func Tail[A any](as []A) Option[[]A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/record`
@@ -4259,6 +4295,7 @@ type Semigroup[A any] = semigroup.Semigroup[A]
 func UnionFirstSemigroup[K comparable, V any]() Semigroup[Record[K, V]]
 func UnionLastSemigroup[K comparable, V any]() Semigroup[Record[K, V]]
 func UnionSemigroup[K comparable, V any](s Semigroup[V]) Semigroup[Record[K, V]]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/pair`
@@ -4337,6 +4374,7 @@ func (p Pair[L, R]) String() string
 type Semigroup[A any] = semigroup.Semigroup[A]
 type Tuple2[A, B any] = tuple.Tuple2[A, B]
 func ToTuple[A, B any](t Pair[A, B]) Tuple2[A, B]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/tuple`
@@ -4563,6 +4601,7 @@ func Replicate9[T any](t T) Tuple9[T, T, T, T, T, T, T, T, T]
 func (t Tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9]) MarshalJSON() ([]byte, error)
 func (t Tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9]) String() string
 func (t *Tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9]) UnmarshalJSON(data []byte) error
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/predicate`
@@ -4594,6 +4633,7 @@ func Not[A any](predicate Predicate[A]) Predicate[A]
 type Semigroup[A any] = semigroup.Semigroup[Predicate[A]]
 func SemigroupAll[A any]() Semigroup[A]
 func SemigroupAny[A any]() Semigroup[A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/endomorphism`
@@ -4634,6 +4674,7 @@ func Chain[A any](f Endomorphism[A]) Operator[A]
 func ChainFirst[A any](f Endomorphism[A]) Operator[A]
 func Compose[A any](g Endomorphism[A]) Operator[A]
 func Map[A any](f Endomorphism[A]) Operator[A]
+
 ```
 
 ---
@@ -4659,6 +4700,7 @@ type Eq[T any] interface {
 func Empty[T any]() Eq[T]
 func FromEquals[T any](c func(x, y T) bool) Eq[T]
 func FromStrictEquals[T comparable]() Eq[T]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/ord`
@@ -4694,6 +4736,7 @@ func FromStrictCompare[A C.Ordered]() Ord[A]
 func MakeOrd[T any](c func(x, y T) int, e func(x, y T) bool) Ord[T]
 func OrdTime() Ord[time.Time]
 func Reverse[T any](o Ord[T]) Ord[T]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/semigroup`
@@ -4722,6 +4765,7 @@ func FunctionSemigroup[A, B any](s Semigroup[B]) Semigroup[func(A) B]
 func Last[A any]() Semigroup[A]
 func MakeSemigroup[A any](c func(A, A) A) Semigroup[A]
 func Reverse[A any](m Semigroup[A]) Semigroup[A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/monoid`
@@ -4748,6 +4792,7 @@ func MakeMonoid[A any](c func(A, A) A, e A) Monoid[A]
 func Reverse[A any](m Monoid[A]) Monoid[A]
 func VoidMonoid() Monoid[Void]
 type Void = function.Void
+
 ```
 
 ---
@@ -4779,6 +4824,7 @@ func SemigroupProduct[A Number]() S.Semigroup[A]
 func SemigroupSum[A Number]() S.Semigroup[A]
 func Sub[T Number](right T) func(T) T
 type Number interface {
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/string`
@@ -4805,6 +4851,7 @@ func Prepend(prefix string) func(string) string
 func Size(s string) int
 func ToBytes(s string) []byte
 func ToRunes(s string) []rune
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/boolean`
@@ -4818,6 +4865,7 @@ Boolean operations, monoids (All, Any), and Eq/Ord instances.
 ```go
 var (
 type Monoid = monoid.Monoid[bool]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/bytes`
@@ -4833,6 +4881,7 @@ var (
 func Empty() []byte
 func Size(as []byte) int
 func ToString(a []byte) string
+
 ```
 
 ---
@@ -4902,6 +4951,7 @@ func ChainFirst[A, B any](f Kleisli[A, B]) Operator[A, A]
 func Extend[A, B any](f func(A) B) Operator[A, B]
 func Flap[B, A any](a A) Operator[func(A) B, B]
 func Map[A, B any](f func(A) B) Operator[A, B]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/lazy`
@@ -4969,6 +5019,7 @@ func SequenceT4[A, B, C, D any](a Lazy[A], b Lazy[B], c Lazy[C], d Lazy[D]) Lazy
 type Operator[A, B any] = Kleisli[Lazy[A], B]
 type Predicate[A any] = predicate.Predicate[A]
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/constant`
@@ -4989,6 +5040,7 @@ func Unwrap[E, A any](c Const[E, A]) E
 type Const[E, A any] struct {
 func Make[E, A any](e E) Const[E, A]
 func MonadMap[E, A, B any](fa Const[E, A], _ func(A) B) Const[E, B]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/json`
@@ -5007,6 +5059,7 @@ func ToTypeE[A any](src any) Either[A]
 func Unmarshal[A any](data []byte) Either[A]
 type Option[A any] = option.Option[A]
 func ToTypeO[A any](src any) Option[A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/di`
@@ -5081,6 +5134,7 @@ type MultiInjectionToken[T any] interface {
 func MakeMultiToken[T any](name string) MultiInjectionToken[T]
 type Option[T any] = option.Option[T]
 type Result[T any] = result.Result[T]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/builder`
@@ -5097,6 +5151,7 @@ type Option[T any] = option.Option[T]
 type Prism[S, A any] = prism.Prism[S, A]
 func BuilderPrism[T any, B Builder[T]](creator func(T) B) Prism[B, T]
 type Result[T any] = result.Result[T]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/retry`
@@ -5123,6 +5178,7 @@ func ExponentialBackoff(delay time.Duration) RetryPolicy
 func LimitRetries(i uint) RetryPolicy
 type RetryStatus struct {
 func ApplyPolicy(policy RetryPolicy, status RetryStatus) RetryStatus
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/circuitbreaker`
@@ -5162,6 +5218,7 @@ type ReaderIO[R, A any] = readerio.ReaderIO[R, A]
 type State[T, R any] = state.State[T, R]
 func MakeCircuitBreaker[E, T, HKTT, HKTOP, HKTHKTT any](
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/tailrec`
@@ -5182,6 +5239,7 @@ func (t Trampoline[B, L]) Format(f fmt.State, verb rune)
 func (t Trampoline[B, L]) GoString() string
 func (t Trampoline[B, L]) LogValue() slog.Value
 func (t Trampoline[B, L]) String() string
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/ioref`
@@ -5207,6 +5265,7 @@ func Read[A any](ref IORef[A]) IO[A]
 type IORef[A any] = *ioRef[A]
 type Pair[A, B any] = pair.Pair[A, B]
 type ReaderIO[R, A any] = readerio.ReaderIO[R, A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/consumer`
@@ -5223,6 +5282,7 @@ type Operator[A, B any] = func(Consumer[A]) Consumer[B]
 func Compose[R1, R2 any](f func(R2) R1) Operator[R1, R2]
 func Contramap[R1, R2 any](f func(R2) R1) Operator[R1, R2]
 func Local[R1, R2 any](f func(R2) R1) Operator[R1, R2]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/erasure`
@@ -5240,6 +5300,7 @@ func Erase1[T1, T2 any](f func(T1) T2) func(any) any
 func Erase2[T1, T2, T3 any](f func(T1, T2) T3) func(any, any) any
 func SafeUnerase[T any](t any) E.Either[error, T]
 func Unerase[T any](t any) T
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/iterator/stateless`
@@ -5312,6 +5373,7 @@ type Seq[T any] = iter.Seq[T]
 func ToSeq[T any](it Iterator[T]) Seq[T]
 type Seq2[K, V any] = iter.Seq2[K, V]
 func ToSeq2[K, V any](it Iterator[Pair[K, V]]) Seq2[K, V]
+
 ```
 
 ---
@@ -5407,6 +5469,7 @@ func MapTo[A, B any](b B) Operator[A, B]
 type Pointed[A any] interface {
 func MakePointed[A any]() Pointed[A]
 type Seq[T any] = iter.Seq[T]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/idiomatic/result`
@@ -5518,6 +5581,7 @@ type Option[A any] = option.Option[A]
 type Pointed[A any] interface {
 func MakePointed[A any]() Pointed[A]
 type Predicate[A any] = predicate.Predicate[A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/idiomatic/ioresult`
@@ -5756,6 +5820,7 @@ type Result[A any] = result.Result[A]
 type Semigroup[A any] = semigroup.Semigroup[IOResult[A]]
 func AltSemigroup[A any]() Semigroup[A]
 type Void = function.Void
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/idiomatic/readerresult`
@@ -5865,6 +5930,7 @@ func SequenceT2[R, A, B any](
 func SequenceT3[R, A, B, C any](
 func SequenceT4[R, A, B, C, D any](
 type Result[A any] = result.Result[A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/idiomatic/readerioresult`
@@ -5957,6 +6023,7 @@ func RightIO[R, A any](ma IO[A]) ReaderIOResult[R, A]
 func RightReader[R, A any](ma Reader[R, A]) ReaderIOResult[R, A]
 func RightReaderIO[R, A any](ma ReaderIO[R, A]) ReaderIOResult[R, A]
 type Result[A any] = result.Result[A]
+
 ```
 
 ## package `github.com/IBM/fp-go/v2/idiomatic/context/readerresult`
@@ -6077,4 +6144,5 @@ func SequenceT4[A, B, C, D any](
 func WithContext[A any](ma ReaderResult[A]) ReaderResult[A]
 type Result[A any] = result.Result[A]
 type Trampoline[A, B any] = tailrec.Trampoline[A, B]
+
 ```
