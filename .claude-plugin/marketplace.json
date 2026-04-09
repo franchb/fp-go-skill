@@ -1,0 +1,16 @@
+{
+  "name": "fp-go-skill",
+  "owner": {
+    "name": "franchb"
+  },
+  "metadata": {
+    "description": "Functional programming guidance for Go projects using fp-go/v2"
+  },
+  "plugins": [
+    {
+      "name": "fp-go",
+      "source": "./",
+      "description": "Active FP guidance for Go projects using fp-go/v2. Monad selection, code review, migration assistance, and pattern suggestions."
+    }
+  ]
+}

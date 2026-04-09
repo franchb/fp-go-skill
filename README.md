@@ -15,10 +15,22 @@ Active functional programming guidance for Go projects using [fp-go/v2](https://
 
 ## Install
 
-```bash
-claude plugin add github:franchb/fp-go-skill
+### CLI
 
+```bash
+# Add the marketplace
+claude plugin marketplace add franchb/fp-go-skill
+
+# Install the plugin
+claude plugin install fp-go
 ```
+
+### UI
+
+1. Open Claude Code Settings (gear icon or `/settings`)
+2. Go to **Plugins** > **Marketplaces** > **Add**
+3. Enter `franchb/fp-go-skill` and confirm
+4. Return to **Plugins**, find **fp-go**, and click **Install**
 
 ## Usage
 
