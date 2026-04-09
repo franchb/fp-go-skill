@@ -9,6 +9,7 @@ description: >
   mentions of "fp-go", "fptest", "functional Go", "monad", "Either", "Option",
   "Result", "IOResult", "ReaderIOResult", "Effect", "property-based testing",
   "law verification", "algebraic laws" in Go context.
+allowed-tools: Read, Grep, Glob, LSP
 ---
 
 # fp-go/v2 — Active FP Guidance

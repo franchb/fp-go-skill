@@ -1,0 +1,13 @@
+# Default: all files require maintainer review
+* @franchb
+
+# AI-interpreted content files (highest security sensitivity)
+*.md @franchb
+plugin.json @franchb
+.claude-plugin/ @franchb
+
+# Infrastructure files
+.github/workflows/ @franchb
+.github/CODEOWNERS @franchb
+.github/dependabot.yml @franchb
+SECURITY.md @franchb

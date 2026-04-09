@@ -1,0 +1,57 @@
+name: Release with Provenance
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Create deterministic archive
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          git archive --format=tar.gz --prefix=fp-go-skill-${TAG}/ \
+            -o fp-go-skill-${TAG}.tar.gz HEAD
+          sha256sum fp-go-skill-${TAG}.tar.gz > SHA256SUMS.txt
+      - id: hash
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "hashes=$(sha256sum fp-go-skill-${TAG}.tar.gz | base64 -w0)" >> "$GITHUB_OUTPUT"
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: 'fp-go-skill-*.tar.gz'
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          gh release create "$TAG" fp-go-skill-${TAG}.tar.gz SHA256SUMS.txt \
+            --title "$TAG" --generate-notes
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-artifacts
+          path: |
+            fp-go-skill-*.tar.gz
+            SHA256SUMS.txt
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      upload-assets: true

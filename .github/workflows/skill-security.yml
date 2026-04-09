@@ -1,0 +1,92 @@
+name: Skill Security Scan
+on:
+  pull_request:
+    paths: ['**/*.md', '**/*.json', '.claude-plugin/**']
+permissions:
+  contents: read
+jobs:
+  skill-security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Detect hidden Unicode characters
+        run: |
+          echo "Scanning for hidden Unicode characters..."
+          FOUND=0
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              if grep -qP '[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{2064}\x{FEFF}\x{00AD}\x{034F}\x{180E}]' "$file" 2>/dev/null; then
+                echo "::error file=$file::Hidden Unicode characters found"
+                grep -nP '[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{2064}\x{FEFF}\x{00AD}\x{034F}\x{180E}]' "$file" || true
+                FOUND=1
+              fi
+            fi
+          done < <(git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD -- '*.md' '*.json')
+          [ "$FOUND" -eq 0 ] || exit 1
+
+      - name: Scan for prompt injection patterns
+        run: |
+          PATTERNS=(
+            'ignore.*previous.*instructions'
+            'disregard.*above'
+            'new.instructions:'
+            'you.are.now'
+            'override.*(safety|security)'
+            'execute.*silently'
+            'do.not.tell.*user'
+            'curl.*\|.*bash'
+            'wget.*\|.*sh'
+            'base64.*-d'
+            'eval\('
+            '\$\(.*\)'
+            'rm\s+-rf'
+            'chmod\s+777'
+          )
+          FOUND=0
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              for pattern in "${PATTERNS[@]}"; do
+                if grep -qiP "$pattern" "$file" 2>/dev/null; then
+                  echo "::warning file=$file::Suspicious pattern detected"
+                  grep -niP "$pattern" "$file"
+                  FOUND=1
+                fi
+              done
+            fi
+          done < <(git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD -- '*.md')
+          if [ "$FOUND" -ne 0 ]; then
+            echo "::warning::Manual review required for flagged patterns"
+          fi
+
+      - name: Verify skill tool restrictions
+        run: |
+          FAILED=0
+          for file in $(find . -name "SKILL.md" -not -path './.git/*'); do
+            if ! grep -q 'allowed-tools:' "$file"; then
+              echo "::error file=$file::Missing allowed-tools restriction"
+              FAILED=1
+            fi
+          done
+          exit "$FAILED"
+
+      - name: Verify integrity hashes
+        run: |
+          find . -name "SKILL.md" -not -path './.git/*' -exec sha256sum {} \; | sort > /tmp/skill-hashes-new.sha256
+          find . -path './skills/*/*.md' -not -path './.git/*' -exec sha256sum {} \; | sort >> /tmp/skill-hashes-new.sha256
+          sha256sum .claude-plugin/plugin.json >> /tmp/skill-hashes-new.sha256 2>/dev/null || true
+          if [ -f .skill-hashes.sha256 ]; then
+            if ! diff -q .skill-hashes.sha256 /tmp/skill-hashes-new.sha256 > /dev/null 2>&1; then
+              echo "::warning::Skill file hashes changed — verify changes are intentional:"
+              diff .skill-hashes.sha256 /tmp/skill-hashes-new.sha256 || true
+            else
+              echo "Integrity hashes match."
+            fi
+          else
+            echo "::notice::No baseline .skill-hashes.sha256 found — skipping integrity check"
+          fi
