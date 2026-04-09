@@ -1,7 +1,7 @@
 name: Skill Security Scan
 on:
   pull_request:
-    paths: ['**/*.md', '**/*.json', '.claude-plugin/**']
+    branches: [main]
 permissions:
   contents: read
 jobs:
