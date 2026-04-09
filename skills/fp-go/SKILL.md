@@ -2,11 +2,13 @@
 name: fp-go
 description: >
   Active FP guidance for Go projects using fp-go/v2. Provides monad selection,
-  code review, migration assistance, and pattern suggestions. Use when working
-  on Go projects that use fp-go/v2, migrating Go code to functional style, or
-  asking about functional programming patterns in Go. Triggers on: "/fp-go",
-  imports containing "IBM/fp-go", mentions of "fp-go", "functional Go",
-  "monad", "Either", "Option", "Result", "IOResult", "ReaderIOResult", "Effect" in Go context.
+  code review, migration assistance, testing guidance, and pattern suggestions.
+  Use when working on Go projects that use fp-go/v2 or fptest-go, migrating Go
+  code to functional style, or asking about functional programming patterns in Go.
+  Triggers on: "/fp-go", imports containing "IBM/fp-go" or "franchb/fptest",
+  mentions of "fp-go", "fptest", "functional Go", "monad", "Either", "Option",
+  "Result", "IOResult", "ReaderIOResult", "Effect", "property-based testing",
+  "law verification", "algebraic laws" in Go context.
 ---
 
 # fp-go/v2 — Active FP Guidance
@@ -36,6 +38,16 @@ fp-go/v2 (`github.com/IBM/fp-go/v2`) is a typed functional programming library f
 | `B`   | `github.com/IBM/fp-go/v2/boolean` |
 | `L`   | `github.com/IBM/fp-go/v2/optics/lens` |
 | `PR`  | `github.com/IBM/fp-go/v2/optics/prism` |
+
+**fptest-go** (property-based testing):
+
+| Alias | Package |
+|-------|---------|
+| `FPT`  | `github.com/franchb/fptest/gen` |
+| `FPTL` | `github.com/franchb/fptest/laws` |
+| `FPTA` | `github.com/franchb/fptest/assert` |
+| `FPTP` | `github.com/franchb/fptest/prop` |
+| `FPTM` | `github.com/franchb/fptest/mock` |
 
 **Idiomatic variants** (tuple-based, zero-alloc):
 
@@ -172,6 +184,39 @@ When the user wants to convert imperative Go to fp-go, follow this recipe:
 
 For detailed recipes, read `cookbook.md` from this skill's directory.
 
+## Mode 5: Testing
+
+When the project imports `github.com/franchb/fptest`, silently apply testing conventions:
+- Use the fptest-go import aliases from the table above
+- Prefer property-based tests over example-based for algebraic properties
+- Use `assert.AssertSome`/`AssertRight`/`AssertOk`/`AssertEffect` instead of manual unwrapping
+- Use `laws.*` for verifying typeclass laws on custom types
+
+When the user asks "how should I test this?" or is writing tests for fp-go code:
+
+1. **Custom type with algebraic operations?** (Monoid, Semigroup, Eq, Ord) → `laws.MonoidLaws`, `laws.EqLaws`, etc.
+2. **Custom Functor/Monad/Applicative?** → `laws.FunctorLaws`, `laws.MonadLaws`, `laws.ApplicativeFullLaws`
+3. **Optics (Lens/Prism)?** → `laws.LensLaws`
+4. **Encode/Decode pair?** → `prop.RoundTrip` / `prop.RoundTripError`
+5. **Optimized implementation?** → `prop.Oracle` against reference
+6. **Idempotent transformation?** → `prop.Idempotent`
+7. **Effectful pipeline?** → `mock.TrackedStub` + `assert.AssertIORight` / `assert.AssertEffect`
+8. **Simple success/failure check?** → `assert.AssertSome`, `assert.AssertRight`, `assert.AssertOk`
+
+When reviewing test code, check for these anti-patterns:
+
+| Anti-pattern | What to suggest |
+|-------------|-----------------|
+| Manual `if opt.IsNone()` in tests | Use `assert.AssertSome(t, opt)` |
+| `result.Unwrap()` without checking | Use `assert.AssertOk(t, r)` |
+| Example-based tests for algebraic laws | Use `laws.FunctorLaws`, `laws.MonadLaws` with generators |
+| Testing Map/Chain with one input | Property-based: generators + `laws.FunctorLaws` |
+| Manual `effect.RunSync` + error check | Use `assert.AssertEffect(t, deps, ctx, eff)` |
+| Missing law tests for custom Monoid | Add `laws.MonoidLaws` with generators |
+| `reflect.DeepEqual` on fp-go types | Use `assert.AssertEq` with proper `Eq` instance |
+
+For detailed testing patterns, read `testing.md` from this skill's directory.
+
 ---
 
 # Companion File Loading
@@ -184,5 +229,6 @@ When deeper context is needed, read the appropriate companion file from this ski
 | Need type signatures or operation details | `core-patterns.md` |
 | Advanced: Do-notation, DI, transformers, profunctors | `mastery.md` |
 | "Does fp-go have X?" / specific API lookup | `full-reference.md` |
+| Testing fp-go code, property-based testing, law verification | `testing.md` |
 
 Use the `Read` tool to load the file. Only load what's needed for the current task — don't load all files at once.
