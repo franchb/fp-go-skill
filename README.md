@@ -1,8 +1,37 @@
-# fp-go Skill for Claude Code
+# fp-go Skill Marketplace
 
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/franchb/fp-go-skill/badge)](https://scorecard.dev/viewer/?uri=github.com/franchb/fp-go-skill)
+[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://github.com/franchb/fp-go-skill/attestations)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Active functional programming guidance for Go projects using [fp-go/v2](https://github.com/IBM/fp-go).
+<p align="center">
+  <img src="gopher.png" alt="fp-go/v2 Gopher teaching functional programming" width="600">
+</p>
+
+A Claude Code plugin marketplace providing functional programming guidance for Go projects using [fp-go/v2](https://github.com/IBM/fp-go).
+
+## Installation
+
+### Claude Code Marketplace
+
+```bash
+claude plugin marketplace add franchb/fp-go-skill
+```
+
+### Browse and Install Plugins
+
+```text
+/plugin menu
+```
+
+### Local Development
+
+To add the marketplace locally (e.g., for testing or development), navigate to the **parent directory** of this repository:
+
+```bash
+cd /path/to/parent  # e.g., if repo is at ~/projects/fp-go-skill, be in ~/projects
+claude plugin marketplace add ./fp-go-skill
+```
 
 ## What it does
 
@@ -13,30 +42,15 @@ Active functional programming guidance for Go projects using [fp-go/v2](https://
 - **Testing**: Property-based testing guidance with [fptest-go](https://github.com/franchb/fptest-go) — law verification, generators, FP-aware assertions, functional mocking
 - **Deep reference**: Layered docs from compact cheatsheet to full API inventory (5,262 functions across 61 packages)
 
-## Install
+## Available Plugins
 
-### CLI
-
-```bash
-# Add the marketplace
-claude plugin marketplace add franchb/fp-go-skill
-
-# Install the plugin
-claude plugin install fp-go
-```
-
-### UI
-
-1. Open Claude Code Settings (gear icon or `/settings`)
-2. Go to **Plugins** > **Marketplaces** > **Add**
-3. Enter `franchb/fp-go-skill` and confirm
-4. Return to **Plugins**, find **fp-go**, and click **Install**
+| Plugin | Description |
+|--------|-------------|
+| [fp-go](plugins/fp-go/) | Active FP guidance for Go projects using fp-go/v2 — monad selection, code review, migration, and testing |
 
 ## Usage
 
-Invoke with `/fp-go` in any Claude Code session, or just start working on a Go project that imports `github.com/IBM/fp-go/v2` or `github.com/franchb/fptest` — the skill activates automatically.
-
-### Modes
+Invoke with `/fp-go` in any Claude Code session, or start working on a Go project that imports `github.com/IBM/fp-go/v2` or `github.com/franchb/fptest` — the skill activates automatically.
 
 | Command | What it does |
 |---------|-------------|
@@ -44,7 +58,7 @@ Invoke with `/fp-go` in any Claude Code session, or just start working on a Go p
 | "which monad should I use?" | Interactive monad selection wizard |
 | "review my fp-go code" | Check for anti-patterns and suggest improvements |
 | "convert this to fp-go" | Step-by-step migration from imperative Go |
-| "how should I test this?" | Test strategy selection — laws, properties, assertions, mocking |
+| "how should I test this?" | Test strategy — laws, properties, assertions, mocking |
 
 ## Documentation Layers
 
@@ -62,7 +76,7 @@ The skill loads a compact reference (~260 lines) by default and reads deeper doc
 ## Requirements
 
 - Go 1.24+ (for generic type aliases)
-- [fp-go/v2](https://github.com/IBM/fp-go/v2) in your project
+- [fp-go/v2](https://github.com/IBM/fp-go) in your project
 - [fptest-go](https://github.com/franchb/fptest-go) (optional, for testing guidance)
 
 ## Security
@@ -78,14 +92,11 @@ All CI checks enforce:
 - Secret scanning with push protection
 - SLSA Level 3 provenance on releases
 
-See [SECURITY.md](SECURITY.md) for the vulnerability reporting policy.
+See [SECURITY.md](SECURITY.md) for the vulnerability reporting policy and release verification instructions.
 
-### Verify a release
+## Contributing
 
-```bash
-gh attestation verify <artifact> -R franchb/fp-go-skill
-
-```
+We welcome contributions! Please see [CLAUDE.md](CLAUDE.md) for skill authoring guidelines.
 
 ## License
 
