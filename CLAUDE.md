@@ -75,13 +75,5 @@ Follow the rules in `.markdownlint.jsonc`:
 
 ## Testing Locally
 
-1. Clone the repo
-2. From the **parent directory**, add as a local marketplace:
-
-   ```bash
-   cd /path/to/parent
-   claude plugin marketplace add ./fp-go-skill
-   ```
-
-3. Install the plugin: `claude plugin install fp-go`
-4. Open a Go project that uses fp-go/v2 and verify `/fp-go` activates
+- Clone the repo
+- From the **parent directory**, add as a local marketplace:
