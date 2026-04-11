@@ -5,7 +5,7 @@ description: >
   code review, migration assistance, testing guidance, and pattern suggestions.
   Use when working on Go projects that use fp-go/v2 or fptest-go, migrating Go
   code to functional style, or asking about functional programming patterns in Go.
-  Triggers on: "/fp-go", imports containing "IBM/fp-go" or "franchb/fptest",
+  Triggers on: "/fp-go", imports containing "IBM/fp-go" or "franchb/fptest-go",
   mentions of "fp-go", "fptest", "functional Go", "monad", "Either", "Option",
   "Result", "IOResult", "ReaderIOResult", "Effect", "property-based testing",
   "law verification", "algebraic laws" in Go context.
@@ -44,11 +44,11 @@ fp-go/v2 (`github.com/IBM/fp-go/v2`) is a typed functional programming library f
 
 | Alias | Package |
 |-------|---------|
-| `FPT`  | `github.com/franchb/fptest/gen` |
-| `FPTL` | `github.com/franchb/fptest/laws` |
-| `FPTA` | `github.com/franchb/fptest/assert` |
-| `FPTP` | `github.com/franchb/fptest/prop` |
-| `FPTM` | `github.com/franchb/fptest/mock` |
+| `FPT`  | `github.com/franchb/fptest-go/gen` |
+| `FPTL` | `github.com/franchb/fptest-go/laws` |
+| `FPTA` | `github.com/franchb/fptest-go/assert` |
+| `FPTP` | `github.com/franchb/fptest-go/prop` |
+| `FPTM` | `github.com/franchb/fptest-go/mock` |
 
 **Idiomatic variants** (tuple-based, zero-alloc):
 
@@ -194,7 +194,7 @@ For detailed recipes, read `cookbook.md` from this skill's directory.
 
 ## Mode 5: Testing
 
-When the project imports `github.com/franchb/fptest`, silently apply testing conventions:
+When the project imports `github.com/franchb/fptest-go`, silently apply testing conventions:
 
 - Use the fptest-go import aliases from the table above
 - Prefer property-based tests over example-based for algebraic properties

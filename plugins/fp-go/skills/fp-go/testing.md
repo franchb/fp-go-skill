@@ -1,6 +1,6 @@
 # fptest-go — Property-Based Testing for fp-go/v2
 
-fptest-go (`github.com/franchb/fptest`) is a property-based testing library for Go that verifies algebraic laws in fp-go abstractions. It provides monadic generators, law verification, FP-aware assertions, higher-level property patterns, and functional mocking — all integrated with Go's standard `testing` package.
+fptest-go (`github.com/franchb/fptest-go`) is a property-based testing library for Go that verifies algebraic laws in fp-go abstractions. It provides monadic generators, law verification, FP-aware assertions, higher-level property patterns, and functional mocking — all integrated with Go's standard `testing` package.
 
 **Dependencies**: `github.com/IBM/fp-go/v2` + `pgregory.net/rapid`
 
@@ -8,11 +8,11 @@ fptest-go (`github.com/franchb/fptest`) is a property-based testing library for 
 
 | Alias | Package | Purpose |
 |-------|---------|---------|
-| `FPT`  | `github.com/franchb/fptest/gen` | Monadic generators |
-| `FPTL` | `github.com/franchb/fptest/laws` | Algebraic law verification |
-| `FPTA` | `github.com/franchb/fptest/assert` | FP-aware assertions |
-| `FPTP` | `github.com/franchb/fptest/prop` | Property patterns |
-| `FPTM` | `github.com/franchb/fptest/mock` | Functional mocking |
+| `FPT`  | `github.com/franchb/fptest-go/gen` | Monadic generators |
+| `FPTL` | `github.com/franchb/fptest-go/laws` | Algebraic law verification |
+| `FPTA` | `github.com/franchb/fptest-go/assert` | FP-aware assertions |
+| `FPTP` | `github.com/franchb/fptest-go/prop` | Property patterns |
+| `FPTM` | `github.com/franchb/fptest-go/mock` | Functional mocking |
 
 ## Quick Start
 
@@ -22,9 +22,9 @@ import (
     "pgregory.net/rapid"
 
     "github.com/IBM/fp-go/v2/option"
-    "github.com/franchb/fptest/assert"
-    "github.com/franchb/fptest/gen"
-    "github.com/franchb/fptest/laws"
+    "github.com/franchb/fptest-go/assert"
+    "github.com/franchb/fptest-go/gen"
+    "github.com/franchb/fptest-go/laws"
 )
 
 func TestOptionFunctorLaws(t *testing.T) {
