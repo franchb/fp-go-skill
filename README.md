@@ -50,7 +50,7 @@ claude plugin marketplace add ./fp-go-skill
 
 ## Usage
 
-Invoke with `/fp-go` in any Claude Code session, or start working on a Go project that imports `github.com/IBM/fp-go/v2` or `github.com/franchb/fptest` — the skill activates automatically.
+Invoke with `/fp-go` in any Claude Code session, or start working on a Go project that imports `github.com/IBM/fp-go/v2` or `github.com/franchb/fptest-go` — the skill activates automatically.
 
 | Command | What it does |
 |---------|-------------|
