@@ -29,7 +29,7 @@ jobs:
           TAG=${GITHUB_REF#refs/tags/}
           echo "hashes=$(sha256sum fp-go-skill-${TAG}.tar.gz | base64 -w0)" >> "$GITHUB_OUTPUT"
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: 'fp-go-skill-*.tar.gz'
       - name: Create GitHub Release
