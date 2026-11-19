@@ -5,13 +5,13 @@
     "email": "hello@franchb.com"
   },
   "metadata": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Claude Code plugins for functional programming in Go with fp-go/v2"
   },
   "plugins": [
     {
       "name": "fp-go",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "description": "Active FP guidance for Go projects using fp-go/v2. Monad selection, code review, migration assistance, and pattern suggestions.",
       "author": {
         "name": "Eliah Rusin",
